@@ -1,0 +1,77 @@
+---
+title: "Visualizaciones - SINADEF"
+output: html_document
+---
+
+```{r}
+library(scales)
+library(dplyr)
+library(lubridate)
+library(tidyr)
+library(gridExtra)
+library(ggpubr)
+library(tidyverse)
+```
+
+```{r}
+sinadef.muevio <- readRDS("../../sinadef_longByMueVio_20200927.Rdata")
+
+
+p.list <- lapply(sort(unique(sinadef.muevio$mue.vio)), function(i) {
+  sinadef.muevio %>%
+  filter(edad_cat.by5 != "Total" & mue.vio == i) %>%
+  group_by(edad_cat.by5,mue.vio,date) %>%
+  summarize(n=sum(n))%>% 
+  ungroup() %>% 
+  group_by(month = format(as.Date(date, "%Y/%m/%d"), '%Y-%m'),
+           edad_cat.by5, mue.vio)%>% 
+  summarise(n=sum(n),
+            date=min(as.Date(date, "%Y/%m/%d"))
+  ) %>% ungroup() %>%
+  arrange(month) %>%
+  ggplot(aes(factor(month), edad_cat.by5)
+         ) + 
+  geom_tile(aes(fill = n),colour = "white", na.rm = TRUE) +
+  scale_fill_continuous(low = "white", high = "red") +  
+  guides(fill= guide_colourbar(title="Total Deaths"))+
+  theme_bw() + theme_minimal() + 
+  labs(title = "",
+       x = "Year", y = "Age category") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  scale_x_discrete(breaks = c("2017-01","2018-01","2019-01","2020-01"))+
+  scale_y_discrete(breaks = c("00-04","10-14","20-24","30-34","40-44","50-54","60-64","70-74","80-84","90-94"))  +
+  geom_vline(xintercept = c("2017-01","2018-01","2019-01","2020-01"),
+             linetype = "twodash")+
+  facet_wrap(vars(mue.vio))
+})
+
+do.call(grid.arrange, c(p.list, nrow=2,top="Monthly deaths in Perú from 2017 to 2020 by type of death"))
+```
+
+```{r}
+sinadef.muevio %>%
+  filter(edad_cat.by5 != "Total") %>%
+  group_by(edad_cat.by5,mue.vio,date) %>%
+  summarize(n=sum(n))%>% 
+  ungroup() %>% 
+  group_by(week = format(as.Date(date, "%Y/%m/%d"), '%Y-%W'),
+           edad_cat.by5, mue.vio)%>% 
+  summarise(n=sum(n),
+            date=min(as.Date(date, "%Y/%m/%d"))
+  ) %>% ungroup() %>%
+  arrange(week) %>%
+  ggplot(aes(factor(week), edad_cat.by5)
+         ) + 
+  geom_tile(aes(fill = n),colour = "white", na.rm = TRUE) +
+  scale_fill_continuous(low = "white", high = "red") +  
+  guides(fill= guide_colourbar(title="Total Deaths"))+
+  theme_bw() + theme_minimal() + 
+  labs(title = "Weekly deaths in Perú from 2017 to 2020",
+       x = "Year", y = "Age category") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  scale_x_discrete(breaks = c("2017-01","2018-01","2019-01","2020-01")) +
+  geom_vline(xintercept = c("2017-01","2018-01","2019-01","2020-01"),
+             linetype = "twodash")+
+  facet_grid(rows = vars(mue.vio))
+```
+
