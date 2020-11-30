@@ -2,7 +2,8 @@
 
 Este repositorio contiene las bases de datos procesadas y curadas del Sistema Nacional de Defunciones (SINADEF) del Ministerio de Salud del Perú (MINSA).
 
-- Acceso: https://www.dropbox.com/home/db_SINADEF_repo jorge.ruiz.c@upch.pe
+- Acceso: https://www.dropbox.com/home/db_SINADEF_repo o por correo: jorge.ruiz.c@upch.pe
+
 
 El archivo principal (base de datos curada) es "sinadef_YYMMDD.Rdata".
 
@@ -27,3 +28,10 @@ Los archivos con formato "sinadef_longBy[variable]_YYMMDD.Rdata" se encuentran o
 | Distrito B  | Femenino  | 2 |
 | Distrito C  | Femenino  | 1 |
 | Distrito C  | Masculino   | 1 |
+
+
+El SINADEF fue descrito y presentado en el artículo https://rpmesp.ins.gob.pe/index.php/rpmesp/article/view/3913/3111
+
+Trabajos relacionados utilizando el SINADEF:
+
+ - A divergence between underlying and final causes of death in selected conditions: an analysis of death registries in Peru: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6237111/
