@@ -3,7 +3,8 @@
 Este repositorio contiene las bases de datos procesadas y curadas del Sistema Nacional de Defunciones (SINADEF) del Ministerio de Salud del Perú (MINSA).
 
 El archivo principal (base de datos curada) es "sinadef_YYMMDD.Rdata".
-Este archivo es el resultado del pre-procesamiento realizado en ""./Procesamiento/0. Pre-procesamiento"
+
+Este archivo es el resultado del pre-procesamiento realizado en "./Procesamiento/0. Pre-procesamiento". 
 
 | Domicilio  | Sexo | Edad |
 | ------------- | ------------- |  ------------- |

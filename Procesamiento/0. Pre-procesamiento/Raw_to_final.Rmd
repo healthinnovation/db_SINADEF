@@ -20,7 +20,7 @@ Se importan los datos desde el archivo excel al cúal se accede desde el *dashbo
 library(readxl)
 library(readr)
 library(tidyverse)
-sinadef <- read_excel("./SINADEF_DATOS_ABIERTOS_21092020.xlsx",
+sinadef <- read_excel("./SINADEF_DATOS_ABIERTOS_26112020.xlsx",
                       col_names = FALSE)
 ```
 
@@ -119,6 +119,7 @@ Se excluyen los datos de:
   - Se mantienene aquellos con país de domicilio en PERÚ.
   
 ```{r}
+sinadef.nonproc<- sinadef
 sinadef <- sinadef %>%
   filter(!is.na(edad) & edad<=123 & edad_cat != "SIN REGISTRO"& 
            sexo!="INDETERMINADO" & sexo != "SIN REGISTRO"& 
@@ -146,6 +147,17 @@ sinadef <- sinadef %>%
                               ifelse(institucion == "SANIDAD DE LA FUERZA AEREA", "SANIDAD FAP",
                                      ifelse(institucion =="SANIDAD DEL EJERCITO","SANIDAD EP",institucion)))
   )
+
+sinadef.nonproc<- sinadef.nonproc %>%
+  mutate(lugar = ifelse(lugar =="OTRO", "OTROS",lugar),
+         mue.vio = ifelse(mue.vio =="OTRO ACCIDENTE", "OTROS",mue.vio),
+         tipo.seg = ifelse(tipo.seg =="PRIVADOS", "PRIVADO",tipo.seg),
+         institucion = ifelse(institucion =="SANIDAD DE LA POLICIA NACIONAL DEL PERU", "SANIDAD PNP",
+                              ifelse(institucion == "SANIDAD DE LA FUERZA AEREA", "SANIDAD FAP",
+                                     ifelse(institucion =="SANIDAD DEL EJERCITO","SANIDAD EP",institucion)))
+  )
+
+
 ```
 
 ## Niveles de Instrucción
@@ -165,6 +177,21 @@ sinadef <- sinadef %>%
          mue.vio = replace(mue.vio, mue.vio=="NO SE CONOCE","NO REGISTRO/NA"),
          mue.vio = replace(mue.vio, mue.vio=="SIN REGISTRO","NO REGISTRO/NA")
   )
+
+sinadef.nonproc<- sinadef.nonproc  %>%
+  mutate(niv.ins = replace(niv.ins, niv.ins=="INICIAL / PRE-ESCOLAR","SIN EDUCACION") ,
+         niv.ins = replace(niv.ins, niv.ins=="NINGUN NIVEL / ILETRADO","SIN EDUCACION"),
+         niv.ins = replace(niv.ins, niv.ins=="PRIMARIA INCOMPLETA","SIN EDUCACION"),
+         niv.ins = replace(niv.ins, niv.ins=="SECUNDARIA INCOMPLETA","PRIMARIA COMPLETA"),
+         niv.ins = replace(niv.ins, niv.ins=="SUPERIOR NO UNIV. INC.","SECUNDARIA COMPLETA"),
+         niv.ins = replace(niv.ins, niv.ins=="SUPERIOR UNIV. INC.","SECUNDARIA COMPLETA"),
+         niv.ins = replace(niv.ins, niv.ins=="SUPERIOR UNIV. COMP.","EDUCACION SUPERIOR"),
+         niv.ins = replace(niv.ins, niv.ins=="SUPERIOR NO UNIV. COMP.","EDUCACION SUPERIOR"),
+         mue.vio = replace(mue.vio, mue.vio=="NO SE CONOCE","NO REGISTRO/NA"),
+         mue.vio = replace(mue.vio, mue.vio=="SIN REGISTRO","NO REGISTRO/NA")
+  )
+
+
 ```
 
 ## Correcciones geográficas
@@ -181,6 +208,21 @@ sinadef <- sinadef %>%
                      from="UTF-8",
                      to="ASCII//TRANSLIT")
   ) 
+
+
+
+sinadef.nonproc<- sinadef.nonproc  %>%
+  mutate(distr =gsub("_", " ",gsub("-", " ", iconv(distr,
+                                                   from="UTF-8",
+                                                   to="ASCII//TRANSLIT"), fixed=TRUE), fixed=TRUE),
+         prov = iconv(prov,
+                      from="UTF-8",
+                      to="ASCII//TRANSLIT"),
+         dep = iconv(dep,
+                     from="UTF-8",
+                     to="ASCII//TRANSLIT")
+  ) 
+
 ```
 
 Se adaptan los nombres de distritos, provincias y departamentos.
@@ -330,14 +372,156 @@ sinadef <- sinadef %>%
   filter( !(distr=="LA UNION" & dep=="ANCASH"))%>%
   filter( !(distr=="HUACHOCOLPA" & prov=="HUANCAYO"))
 
-
+sinadef.nonproc<- sinadef.nonproc  %>%
+  mutate(distr = ifelse(distr == "SANTA RITA DE SIHUAS","SANTA RITA DE SIGUAS",
+                        ifelse(distr =="SAN FCO DE ASIS DE YARUSYACAN","SAN FRANCISCO DE ASIS DE YARUSYACAN",
+                               ifelse(distr =="RAIMONDI","RAYMONDI",
+                                      ifelse(distr =="CASPIZAPA","CASPISAPA",
+                                             ifelse(distr =="CAPASO","CAPAZO",
+                                                    ifelse(distr =="NAZCA","NASCA",
+                                                           ifelse(distr=="HUALLAY GRANDE","HUAYLLAY GRANDE",
+                                                                  ifelse(distr =="HUAILLATI","HUAYLLATI",
+                                                                         ifelse(distr=="ANTONIO RAIMONDI","ANTONIO RAYMONDI",
+                                                                                ifelse(distr=="MILPUCC","MILPUC",
+                                                                                       ifelse(distr=="SAN FRANCISCO DE YESO","SAN FRANCISCO DEL YESO",
+                                                                                              ifelse(distr=="QUISQUI","QUISQUI (KICHKI)",distr)))))))))))),
+         prov = ifelse(prov== "ANTONIO RAIMONDI","ANTONIO RAYMONDI",
+                       ifelse(prov=="NAZCA","NASCA",prov)),
+         prov = ifelse(distr=="APARICIO POMARES (CHUPAN)","YAROWILCA",prov),
+         distr = ifelse(distr=="SAN JOSE DE LOS CHORRILLOS","CUENCA",
+                        ifelse(distr=="MARISCAL GAMARRA","GAMARRA",
+                               ifelse(distr=="CASTA","SAN PEDRO DE CASTA",
+                                      ifelse(distr=="APARICIO POMARES (CHUPAN)","APARICIO POMARES",distr))))
+  ) %>%
+  mutate(dep = ifelse(distr=="SAYAPULLO","LA LIBERTAD",
+                      ifelse(distr=="HUANDO","HUANCAVELICA",
+                             ifelse(distr=="HUALLANCA" & dep =="HUANUCO","SIN REGISTRO",
+                                    ifelse(distr=="HUACHOCOLPA" & dep=="JUNIN","HUANCAVELICA",
+                                           ifelse(distr == "MASISEA","UCAYALI",
+                                                  ifelse(distr=="CASCAS","LA LIBERTAD",dep)))))),
+         prov = ifelse(distr=="SAYAPULLO","GRAN CHIMU",
+                       ifelse(distr=="HUANDO","HUANCAVELICA",
+                              ifelse(distr=="PACHAMARCA","CHURCAMPA",
+                                     ifelse(distr=="BANOS","LAURICOCHA",
+                                            ifelse(distr=="CHAVINILLO","YAROWILCA",
+                                                   ifelse((distr=="JESUS"|distr=="SAN MIGUEL DE CAURI") & dep=="HUANUCO","LAURICOCHA",prov)))))),
+         prov = ifelse((distr == "CAHUAPANAS"| distr == "MANSERICHE"| distr == "MORONA"| distr == "PASTAZA") & dep =="LORETO", "DATEM DEL MARANON",
+                       ifelse(distr=="PUTUMAYO","PUTUMAYO",
+                              ifelse(distr=="TENIENTE MANUEL CLAVERO","PUTUMAYO",
+                                     ifelse(distr=="CASCAS","GRAN CHIMU",
+                                            ifelse(distr=="JACAS CHICO","YAROWILCA",
+                                                   ifelse(distr=="OBAS","YAROWILCA",
+                                                          ifelse(distr=="BARRANCA"& dep=="LORETO","DATEM DEL MARANON",prov))))))),
+         distr = ifelse(distr=="LARAOS" & prov =="HUAROCHIRI","SAN PEDRO DE LARAOS",distr),
+         prov = replace(prov, distr=="SAN FRANCISCO DE ASIS","LAURICOCHA"),
+         prov = replace(prov, distr=="RONDOS","LAURICOCHA"),
+         dep = replace(dep, distr=="POROTO","LA LIBERTAD"),
+         prov = replace(prov, distr=="PAMPAMARCA" & dep =="HUANUCO","YAROWILCA"))%>%
+  filter(!(distr=="HUALLANCA" & prov=="DOS DE MAYO")
+  )%>% ## COVID Positivos cleaning
+  mutate(distr = ifelse(distr == "SANTA RITA DE SIHUAS","SANTA RITA DE SIGUAS",
+                        ifelse(distr =="SAN FCO DE ASIS DE YARUSYACAN","SAN FRANCISCO DE ASIS DE YARUSYACAN",
+                               ifelse(distr =="RAIMONDI","RAYMONDI",
+                                      ifelse(distr =="CASPIZAPA","CASPISAPA",
+                                             ifelse(distr =="CAPASO","CAPAZO",
+                                                    ifelse(distr =="NAZCA","NASCA",
+                                                           ifelse(distr=="HUALLAY GRANDE","HUAYLLAY GRANDE",
+                                                                  ifelse(distr =="HUAILLATI","HUAYLLATI",
+                                                                         ifelse(distr=="ANTONIO RAIMONDI","ANTONIO RAYMONDI",
+                                                                                ifelse(distr=="MILPUCC","MILPUC",
+                                                                                       ifelse(distr=="SAN FRANCISCO DE YESO","SAN FRANCISCO DEL YESO",
+                                                                                              ifelse(distr=="QUISQUI","QUISQUI (KICHKI)",distr)))))))))))),
+         prov = ifelse(prov== "ANTONIO RAIMONDI","ANTONIO RAYMONDI",
+                       ifelse(prov=="NAZCA","NASCA",
+                              ifelse(distr=="JOSE LEONARDO ORTIZ - CHICLAYO","CHICLAYO",prov))),
+         prov = ifelse(distr=="APARICIO POMARES (CHUPAN)","YAROWILCA",prov),
+         distr = ifelse(distr=="SAN JOSE DE LOS CHORRILLOS","CUENCA",
+                        ifelse(distr=="MARISCAL GAMARRA","GAMARRA",
+                               ifelse(distr=="CASTA","SAN PEDRO DE CASTA",
+                                      ifelse(distr=="APARICIO POMARES (CHUPAN)","APARICIO POMARES",
+                                             ifelse(distr=="VIR+","VIRU",
+                                                    ifelse(distr=="CHEP+N","CHEPEN",
+                                                           ifelse(distr=="CAMPOREDONDO","CAMPORREDONDO",
+                                                                  ifelse(distr=="JOSE LEONARDO ORTIZ   CHICLAYO", "JOSE LEONARDO ORTIZ",
+                                                                         ifelse(distr=="CORONEL GREGORIO ALBARRACIN LA","CORONEL GREGORIO ALBARRACIN LANCHIPA",
+                                                                                ifelse(distr=="ETEM","ETEN",distr))))))))))
+  ) %>%
+  mutate(distr=ifelse(distr=="ANDRES AVELINO CACERES D.","ANDRES AVELINO CACERES DORREGARAY",
+                      ifelse(distr=="SAN PEDRO DE PUTINA PUNCU","SAN PEDRO DE PUTINA PUNCO",
+                             ifelse(distr=="CORONEL GREGORIO ALBARRACIN L.", "CORONEL GREGORIO ALBARRACIN LANCHIPA",distr))),
+         dep = replace(dep, dep=="LIMA REGION","LIMA")
+         )%>% ## Covid fallecidos
+  mutate(distr = ifelse(distr == "SANTA RITA DE SIHUAS","SANTA RITA DE SIGUAS",
+                        ifelse(distr =="SAN FCO DE ASIS DE YARUSYACAN","SAN FRANCISCO DE ASIS DE YARUSYACAN",
+                               ifelse(distr =="RAIMONDI","RAYMONDI",
+                                      ifelse(distr =="CASPIZAPA","CASPISAPA",
+                                             ifelse(distr =="CAPASO","CAPAZO",
+                                                    ifelse(distr =="NAZCA","NASCA",
+                                                           ifelse(distr=="HUALLAY GRANDE","HUAYLLAY GRANDE",
+                                                                  ifelse(distr =="HUAILLATI","HUAYLLATI",
+                                                                         ifelse(distr=="ANTONIO RAIMONDI","ANTONIO RAYMONDI",
+                                                                                ifelse(distr=="MILPUCC","MILPUC",
+                                                                                       ifelse(distr=="SAN FRANCISCO DE YESO","SAN FRANCISCO DEL YESO",
+                                                                                              ifelse(distr=="QUISQUI","QUISQUI (KICHKI)",distr)))))))))))),
+         prov = ifelse(prov== "ANTONIO RAIMONDI","ANTONIO RAYMONDI",
+                       ifelse(prov=="NAZCA","NASCA",
+                              ifelse(distr=="JOSE LEONARDO ORTIZ - CHICLAYO","CHICLAYO",prov))),
+         prov = ifelse(distr=="APARICIO POMARES (CHUPAN)","YAROWILCA",prov),
+         distr = ifelse(distr=="SAN JOSE DE LOS CHORRILLOS","CUENCA",
+                        ifelse(distr=="MARISCAL GAMARRA","GAMARRA",
+                               ifelse(distr=="CASTA","SAN PEDRO DE CASTA",
+                                      ifelse(distr=="APARICIO POMARES (CHUPAN)","APARICIO POMARES",
+                                             ifelse(distr=="VIR+","VIRU",
+                                                    ifelse(distr=="CHEP+N","CHEPEN",
+                                                           ifelse(distr=="CAMPOREDONDO","CAMPORREDONDO",
+                                                                  ifelse(distr=="JOSE LEONARDO ORTIZ   CHICLAYO", "JOSE LEONARDO ORTIZ",
+                                                                         ifelse(distr=="CORONEL GREGORIO ALBARRACIN LA","CORONEL GREGORIO ALBARRACIN LANCHIPA",
+                                                                                ifelse(distr=="ETEM","ETEN",distr))))))))))
+  ) %>%
+  mutate(dep = ifelse((distr=="CARABAYLLO" | distr=="LIMA"| distr=="PUENTE PIEDRA" | distr=="SAN MARTIN DE PORRES"| distr=="SAN MIGUEL") & dep=="CALLAO","LIMA", # Al 03/06/2020
+                      ifelse(distr=="SANTA EULALIA","LIMA",
+                             ifelse(distr=="CALLAO","CALLAO",
+                                    ifelse(distr=="PUCARA" & prov=="JAEN","CAJAMARCA",
+                                           ifelse(distr=="SAN JUAN DE LURIGANCHO","LIMA",
+                                                  ifelse(distr=="CASTILLA" & prov=="PIURA","PIURA",
+                                                         ifelse(prov=="CALLAO","CALLAO",
+                                                                ifelse(prov=="TRUJILLO"| distr== "TRUJILLO","LA LIBERTAD",dep)))))))),
+         prov = ifelse(distr=="OXAPAMPA","OXAPAMPA",prov)) %>%
+  mutate(dep = ifelse(distr=="MORROPON","PIURA",
+                      ifelse(distr=="ACOBAMBA" & prov=="ACOBAMBA","HUANCAVELICA",
+                             ifelse( (distr=="FLORENCIA DE MORA" | distr== "HUANCHACO" | distr== "EL PORVENIR" | distr== "HUANCHACO"| distr== "LA ESPERANZA"| distr=="LAREDO" | distr=="MOCHE" | distr=="SALAVERRY"| distr=="TRUJILLO" | distr=="VICTOR LARCO HERRERA") & prov=="TRUJILLO","LA LIBERTAD",dep )))) %>%
+  mutate(prov = replace(prov, distr=="CARHUAZ", "CARHUAZ"),
+         prov = replace(prov, distr=="CASMA", "CASMA"),
+         prov = replace(prov, distr=="CHIMBOTE"|distr=="COISHCO", "SANTA"),
+         prov = replace(prov, dep=="CALLAO","CALLAO")) %>%
+  mutate( dep = replace(dep, dep=="ANCASH" & distr =="GUADALUPITO","LA LIBERTAD"),
+          prov = replace(prov, prov=="SIN REGISTRO" & distr=="GUADALUPITO","VIRU"),
+          prov = replace(prov, prov=="SIN REGISTRO" & distr=="HUARAL","HUARAL"),
+          dep = replace(dep, prov=="HUARAL" & distr=="HUARAL","LIMA"),
+          dep = replace(dep, distr=="COMAS","LIMA"),
+          prov = replace(prov, distr=="COMAS","LIMA"),
+          dep = replace(dep, distr=="SIMBAL" & prov=="TRUJILLO","LA LIBERTAD"),
+          distr = replace(distr, distr=="CELEND N","CELENDIN"),
+          distr = replace(distr, distr=="HUANCAN+","HUANCANE"),
+          distr = replace(distr, distr=="SALITRAL (LUCIANO CASTILLO)","SALITRAL"),
+          distr = replace(distr, distr=="CIUDAD CONSTITUCION","CONSTITUCION"),
+          distr = replace(distr, distr=="HUAROCHIR","HUAROCHIRI"),
+          distr = replace(distr, distr=="JUN N","JUNIN"),
+          prov = replace(prov, prov=="DOS DE MAYO" & distr=="SAN FRANCISCO DE ASIS","LAURICOCHA"),
+          prov = replace(prov, prov=="DOS DE MAYO" & distr=="RONDOS","LAURICOCHA"),
+          distr = replace(distr, distr=="CARMEN ALTO 1/","CARMEN ALTO"),
+          distr = replace(distr, distr=="ANDRES AVELINO CACERES DORREGA","ANDRES AVELINO CACERES DORREGARAY")
+  ) %>%
+  filter( !(distr=="PUEBLO NUEVO" & prov=="CALLAO"))%>%
+  filter( !(distr=="LA UNION" & dep=="ANCASH"))%>%
+  filter( !(distr=="HUACHOCOLPA" & prov=="HUANCAYO"))
 ```
 
 
 ```{r, error=F, warning=F,message=F}
-distr.list <- read_csv("./master_distr.csv") %>% select(!c(X1))
+distr.list <- read_csv("./master_distr.csv") %>% dplyr::select(!c(X1))
 
-setdiff(sinadef%>%select(dep,prov,distr),distr.list) %>% filter(!is.na(distr))
+setdiff(sinadef %>% dplyr::select(dep,prov,distr),distr.list) %>% filter(!is.na(distr))
 
 ```
 
@@ -431,7 +615,89 @@ sinadef <- sinadef %>%
                                    
   
 
-
+sinadef.nonproc<- sinadef.nonproc %>%
+  mutate(causa.A_Letter = ifelse(`CAUSA A (CIE-X)` == "SIN REGISTRO",
+                            "SIN REGISTRO",
+                            substr(`CAUSA A (CIE-X)`,0,1)),
+         causa.B_Letter = ifelse(`CAUSA B (CIE-X)` == "SIN REGISTRO",
+                                 "SIN REGISTRO",
+                                 substr(`CAUSA B (CIE-X)`,0,1)),
+         causa.C_Letter = ifelse(`CAUSA C (CIE-X)` == "SIN REGISTRO",
+                                 "SIN REGISTRO",
+                                 substr(`CAUSA C (CIE-X)`,0,1)),
+         causa.D_Letter = ifelse(`CAUSA D (CIE-X)` == "SIN REGISTRO",
+                                 "SIN REGISTRO",
+                                 substr(`CAUSA D (CIE-X)`,0,1)),
+         causa.E_Letter = ifelse(`CAUSA E (CIE-X)` == "SIN REGISTRO",
+                                 "SIN REGISTRO",
+                                 substr(`CAUSA E (CIE-X)`,0,1)),
+         causa.F_Letter = ifelse(`CAUSA F (CIE-X)` == "SIN REGISTRO",
+                                 "SIN REGISTRO",
+                                 substr(`CAUSA F (CIE-X)`,0,1)),
+         causa.A_Numb = ifelse(`CAUSA A (CIE-X)` == "SIN REGISTRO",
+                                 "SIN REGISTRO",
+                                 substr(`CAUSA A (CIE-X)`,2,5)),
+         causa.B_Numb = ifelse(`CAUSA B (CIE-X)` == "SIN REGISTRO",
+                                 "SIN REGISTRO",
+                                 substr(`CAUSA B (CIE-X)`,2,5)),
+         causa.C_Numb = ifelse(`CAUSA C (CIE-X)` == "SIN REGISTRO",
+                                 "SIN REGISTRO",
+                                 substr(`CAUSA C (CIE-X)`,2,5)),
+         causa.D_Numb = ifelse(`CAUSA D (CIE-X)` == "SIN REGISTRO",
+                                 "SIN REGISTRO",
+                                 substr(`CAUSA D (CIE-X)`,2,5)),
+         causa.E_Numb = ifelse(`CAUSA E (CIE-X)` == "SIN REGISTRO",
+                                 "SIN REGISTRO",
+                                 substr(`CAUSA E (CIE-X)`,2,5)),
+         causa.F_Numb = ifelse(`CAUSA F (CIE-X)` == "SIN REGISTRO",
+                                 "SIN REGISTRO",
+                                 substr(`CAUSA F (CIE-X)`,0,1)),
+         tipo.seg = replace(tipo.seg, tipo.seg=="SANIDAD EP","SANIDAD"),
+         tipo.seg = replace(tipo.seg, tipo.seg=="SANIDAD FAP","SANIDAD"),
+         tipo.seg = replace(tipo.seg, tipo.seg=="SANIDAD NAVAL","SANIDAD"),
+         tipo.seg = replace(tipo.seg, tipo.seg=="SANIDAD PNP","SANIDAD"),
+         tipo.seg = replace(tipo.seg, tipo.seg=="IGNORADO","SR/IGN/EXO/OTROS"),
+         tipo.seg = replace(tipo.seg, tipo.seg=="EXONERADO","SR/IGN/EXO/OTROS"),
+         tipo.seg = replace(tipo.seg, tipo.seg=="OTROS","SR/IGN/EXO/OTROS"),
+         tipo.seg = replace(tipo.seg, tipo.seg=="SIN REGISTRO","SR/IGN/EXO/OTROS"),
+         CIE10.cat = ifelse(causa.A_Letter!="SIN REGISTRO",causa.A_Letter, 
+                            ifelse(causa.B_Letter!="SIN REGISTRO",causa.B_Letter,
+                                   ifelse(causa.C_Letter!="SIN REGISTRO",causa.C_Letter,
+                                          ifelse(causa.D_Letter!="SIN REGISTRO",causa.D_Letter,
+                                                 ifelse(causa.E_Letter!="SIN REGISTRO",causa.E_Letter,
+                                                        ifelse(causa.F_Letter!="SIN REGISTRO",causa.F_Letter,"SIN REGISTRO")))))),
+         CIE10.num = ifelse(causa.A_Letter!="SIN REGISTRO",causa.A_Numb, 
+                            ifelse(causa.B_Letter!="SIN REGISTRO",causa.B_Numb,
+                                   ifelse(causa.C_Letter!="SIN REGISTRO",causa.C_Numb,
+                                          ifelse(causa.D_Letter!="SIN REGISTRO",causa.D_Numb,
+                                                 ifelse(causa.E_Letter!="SIN REGISTRO",causa.E_Numb,
+                                                        ifelse(causa.F_Letter!="SIN REGISTRO",causa.F_Numb,"SIN REGISTRO")))))),
+         CIE10.cat = ifelse(CIE10.cat=="A" |CIE10.cat=="B","Enf. infecciosas y parasitarias",
+                            ifelse(CIE10.cat=="C" | (CIE10.cat=="D" & as.integer(substr(CIE10.num,0,2))<=48),"Neoplasias",
+                                   ifelse(CIE10.cat=="D" & as.integer(substr(CIE10.num,0,2))>=050, "Enf. de la sangre e inmunidad",
+                                          ifelse(CIE10.cat=="E","Enf. endocrinas, nutricionales y metabólicas", 
+                                                 ifelse(CIE10.cat=="F","Trastornos mentales y del comportamiento", 
+                                                        ifelse(CIE10.cat=="G","Enf. del sistema nervioso ", 
+                                                               ifelse(CIE10.cat=="H" & as.integer(substr(CIE10.num,0,2))<=59,"Enf. del ojo y sus anexos", 
+                                                                      ifelse(CIE10.cat=="H" & as.integer(substr(CIE10.num,0,2))>=60,"Enf. del oído y de la apófisis mastoides", 
+                                                                             ifelse(CIE10.cat=="I","Enf. del sistema circulatorio", 
+                                                                                    ifelse(CIE10.cat=="J","Enf. del sistema respiratorio", 
+                                                                                           ifelse(CIE10.cat=="K","Enf. del aparato digestivo", 
+                                                                                                  ifelse(CIE10.cat=="L","Enf. de la piel y el tejido subcutáneo", 
+                                                                                                         ifelse(CIE10.cat=="M","Enf. del sistema osteomuscular y del tejido conectivo", 
+                                                                                                                ifelse(CIE10.cat=="N","Enf. del aparato genitourinario", 
+                                                                                                                       ifelse(CIE10.cat=="O","Embarazo, parto y puerperio", 
+                                                                                                                              ifelse(CIE10.cat=="P","Ciertas afecciones originadas en el periodo perinatal", 
+                                                                                                                                     ifelse(CIE10.cat=="Q","Malformaciones congénitas, deformidades y anomalías cromosómicas", 
+                                                                                                                                            ifelse(CIE10.cat=="R","Sint. y signos anómalos",
+                                                                                                                                                   ifelse(CIE10.cat=="S" |CIE10.cat=="T","Enf. infecciosas y parasitarias",
+                                                                                                                                                          ifelse(CIE10.cat=="V" |CIE10.cat=="Y","Causas externas de morbilidad y de mortalidad", 
+                                                                                                                                                                 ifelse(CIE10.cat=="Z","Factores que influyen en el estado de salud y contacto con los servicios de salud", 
+                                                                                                                                                                        ifelse(CIE10.cat=="U","Situaciones Especiales","SIN REGISTRO"))))))))))))))))))))))
+                                                                             
+                                                 
+                                                 
+                                                 ) 
 ```
 
 
@@ -439,5 +705,8 @@ sinadef <- sinadef %>%
 ```{r}
 write.csv(sinadef, file.path(paste0("../../sinadef_",format(Sys.time(),"%Y%m%d"),".csv")),row.names = F)
 saveRDS(sinadef,file.path(paste0("../../sinadef_",format(Sys.time(),"%Y%m%d"),".Rdata")))
+
+write.csv(sinadef.nonproc, file.path(paste0("../../sinadef_noexcl_",format(Sys.time(),"%Y%m%d"),".csv")),row.names = F)
+saveRDS(sinadef.nonproc,file.path(paste0("../../sinadef_noexcl_",format(Sys.time(),"%Y%m%d"),".Rdata")))
 ```
 
