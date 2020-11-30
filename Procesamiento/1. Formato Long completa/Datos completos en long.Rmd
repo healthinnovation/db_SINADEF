@@ -13,6 +13,32 @@ sinadef <- readRDS("../../sinadef_20200927.Rdata")
 
 ```
 
+
+
+
+```{r}
+sinadef <- sinadef %>%  
+  sample_n(1000)
+
+
+x <- sinadef.n$data[[1]]
+
+
+sinadef.n <- sinadef %>%
+  mutate(annus2 = annus) %>%
+  group_by(annus2) %>%
+  nest() %>%
+  mutate(extract_SINADEF = map(.x=data, 
+                               .f=~extract_SINADEF(.x,"sexo")))
+
+
+
+
+
+```
+
+
+
 ```{r}
 sinadef_sexo <- extract_SINADEF(sinadef,"sexo")
 saveRDS(sinadef_sexo,file.path(paste0("../../sinadef_longBySex_",format(Sys.time(),"%Y%m%d"),".Rdata")))
