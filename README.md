@@ -31,7 +31,9 @@ Los archivos con formato "sinadef_longBy[variable]_YYMMDD.Rdata" se encuentran o
 
 
 El SINADEF fue descrito y presentado en el artículo https://rpmesp.ins.gob.pe/index.php/rpmesp/article/view/3913/3111
+Un resumen del mismo (en inglés) se encuentra aquí: https://crvsgateway.info/file/16356/3011
 
 Trabajos relacionados utilizando el SINADEF:
 
  - A divergence between underlying and final causes of death in selected conditions: an analysis of death registries in Peru: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6237111/
+ - Causes of global mortality: https://www.thelancet.com/journals/langlo/article/PIIS2214-109X(14)70227-X/fulltext#sec1

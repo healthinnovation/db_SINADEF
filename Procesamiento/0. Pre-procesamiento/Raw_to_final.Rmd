@@ -20,9 +20,17 @@ Se importan los datos desde el archivo excel al cúal se accede desde el *dashbo
 library(readxl)
 library(readr)
 library(tidyverse)
-sinadef <- read_excel("./SINADEF_DATOS_ABIERTOS_26112020.xlsx",
-                      col_names = FALSE)
+sinadef <- read_excel("./SINADEF_DATOS_ABIERTOS_26112020.xlsx",col_names = FALSE)
+
 ```
+
+Y se configuran opciones de la exportación
+
+```{r}
+output.csv<- FALSE
+output.excl <- TRUE
+```
+
 
 El archivo contiene información que no son parte de la base de datos (titulos, imagenes, etc.). Esto es removido.
 
@@ -119,7 +127,9 @@ Se excluyen los datos de:
   - Se mantienene aquellos con país de domicilio en PERÚ.
   
 ```{r}
+if (output.excl == T) {
 sinadef.nonproc<- sinadef
+}
 sinadef <- sinadef %>%
   filter(!is.na(edad) & edad<=123 & edad_cat != "SIN REGISTRO"& 
            sexo!="INDETERMINADO" & sexo != "SIN REGISTRO"& 
@@ -148,6 +158,7 @@ sinadef <- sinadef %>%
                                      ifelse(institucion =="SANIDAD DEL EJERCITO","SANIDAD EP",institucion)))
   )
 
+if (output.excl == T) {
 sinadef.nonproc<- sinadef.nonproc %>%
   mutate(lugar = ifelse(lugar =="OTRO", "OTROS",lugar),
          mue.vio = ifelse(mue.vio =="OTRO ACCIDENTE", "OTROS",mue.vio),
@@ -156,7 +167,7 @@ sinadef.nonproc<- sinadef.nonproc %>%
                               ifelse(institucion == "SANIDAD DE LA FUERZA AEREA", "SANIDAD FAP",
                                      ifelse(institucion =="SANIDAD DEL EJERCITO","SANIDAD EP",institucion)))
   )
-
+}
 
 ```
 
@@ -178,6 +189,7 @@ sinadef <- sinadef %>%
          mue.vio = replace(mue.vio, mue.vio=="SIN REGISTRO","NO REGISTRO/NA")
   )
 
+if (output.excl == T) {
 sinadef.nonproc<- sinadef.nonproc  %>%
   mutate(niv.ins = replace(niv.ins, niv.ins=="INICIAL / PRE-ESCOLAR","SIN EDUCACION") ,
          niv.ins = replace(niv.ins, niv.ins=="NINGUN NIVEL / ILETRADO","SIN EDUCACION"),
@@ -190,7 +202,7 @@ sinadef.nonproc<- sinadef.nonproc  %>%
          mue.vio = replace(mue.vio, mue.vio=="NO SE CONOCE","NO REGISTRO/NA"),
          mue.vio = replace(mue.vio, mue.vio=="SIN REGISTRO","NO REGISTRO/NA")
   )
-
+}
 
 ```
 
@@ -210,7 +222,7 @@ sinadef <- sinadef %>%
   ) 
 
 
-
+if (output.excl == T) {
 sinadef.nonproc<- sinadef.nonproc  %>%
   mutate(distr =gsub("_", " ",gsub("-", " ", iconv(distr,
                                                    from="UTF-8",
@@ -222,7 +234,7 @@ sinadef.nonproc<- sinadef.nonproc  %>%
                      from="UTF-8",
                      to="ASCII//TRANSLIT")
   ) 
-
+}
 ```
 
 Se adaptan los nombres de distritos, provincias y departamentos.
@@ -372,6 +384,7 @@ sinadef <- sinadef %>%
   filter( !(distr=="LA UNION" & dep=="ANCASH"))%>%
   filter( !(distr=="HUACHOCOLPA" & prov=="HUANCAYO"))
 
+if (output.excl == T) {
 sinadef.nonproc<- sinadef.nonproc  %>%
   mutate(distr = ifelse(distr == "SANTA RITA DE SIHUAS","SANTA RITA DE SIGUAS",
                         ifelse(distr =="SAN FCO DE ASIS DE YARUSYACAN","SAN FRANCISCO DE ASIS DE YARUSYACAN",
@@ -515,6 +528,8 @@ sinadef.nonproc<- sinadef.nonproc  %>%
   filter( !(distr=="PUEBLO NUEVO" & prov=="CALLAO"))%>%
   filter( !(distr=="LA UNION" & dep=="ANCASH"))%>%
   filter( !(distr=="HUACHOCOLPA" & prov=="HUANCAYO"))
+
+}
 ```
 
 
@@ -613,7 +628,8 @@ sinadef <- sinadef %>%
                                                  
                                                  )
                                    
-  
+
+if (output.excl == T) {
 
 sinadef.nonproc<- sinadef.nonproc %>%
   mutate(causa.A_Letter = ifelse(`CAUSA A (CIE-X)` == "SIN REGISTRO",
@@ -694,19 +710,26 @@ sinadef.nonproc<- sinadef.nonproc %>%
                                                                                                                                                           ifelse(CIE10.cat=="V" |CIE10.cat=="Y","Causas externas de morbilidad y de mortalidad", 
                                                                                                                                                                  ifelse(CIE10.cat=="Z","Factores que influyen en el estado de salud y contacto con los servicios de salud", 
                                                                                                                                                                         ifelse(CIE10.cat=="U","Situaciones Especiales","SIN REGISTRO"))))))))))))))))))))))
-                                                                             
-                                                 
-                                                 
                                                  ) 
+}
+
+
+
 ```
 
-
+Los archivos son guardados en la carpeta "outputs", dentro del directorio principal "db_SINADEF"
 
 ```{r}
-write.csv(sinadef, file.path(paste0("../../sinadef_",format(Sys.time(),"%Y%m%d"),".csv")),row.names = F)
-saveRDS(sinadef,file.path(paste0("../../sinadef_",format(Sys.time(),"%Y%m%d"),".Rdata")))
+if (output.csv == T) {
+  write.csv(sinadef, file.path(paste0("../../output/sinadef_",max(sinadef$fecha),".csv")),row.names = F)
+}
+saveRDS(sinadef,file.path(paste0("../../output/sinadef_",max(sinadef$fecha),".Rdata")))
 
-write.csv(sinadef.nonproc, file.path(paste0("../../sinadef_noexcl_",format(Sys.time(),"%Y%m%d"),".csv")),row.names = F)
-saveRDS(sinadef.nonproc,file.path(paste0("../../sinadef_noexcl_",format(Sys.time(),"%Y%m%d"),".Rdata")))
+if (output.excl == T) {
+if (output.csv == T) {
+  write.csv(sinadef.nonproc, file.path(paste0("../../output/sinadef_noexcl_",max(sinadef$fecha),".csv")),row.names = F)
+}
+saveRDS(sinadef.nonproc,file.path(paste0("../../output/sinadef_noexcl_",max(sinadef$fecha),".Rdata")))
+}
 ```
 
