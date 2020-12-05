@@ -1,8 +1,8 @@
-extract_SINADEF <- function(df,var) {
+extract_SINADEF <- function(df,var,dates.by="weekly") {
   # year = 4 digits numeric
   # month= 2 digits character
   # PENDIENTE: Hacer logic check - que pasa si hay años o meses no válidos?
-  
+  # Can be daily; annualy not implemented
   var <- sym(var)
   
   annus.list <- sort(unique(df$annus)) # Años a solicitar
@@ -49,6 +49,8 @@ extract_SINADEF <- function(df,var) {
             gather(edad_cat.by5,n,Total)
           
           # Se extraen los datos y se añaden los totales
+          if (dates.by=="weekly") {
+          
           output <- df.filtered %>%
             group_by(dep,prov,distr,edad_cat.by5,
                      !!var
@@ -58,9 +60,25 @@ extract_SINADEF <- function(df,var) {
             merge(output.total,by=c(c("dep","prov","distr","edad_cat.by5"),as.character(var),"n"),all=T)%>%
             complete(nesting(dep,prov,distr),edad_cat.by5,!!var) %>% 
             replace(is.na(.), as.integer(0)) %>%
-            mutate(date = paste0(i,"/",l,"/",k))
+            mutate(date = paste0(i,"/",l,"/",k),
+                   week = week(date))
+          }
           
-          sinadef_procesado <- rbind(sinadef_procesado,output)
+          if (dates.by=="daily") {
+            
+            output <- df.filtered %>%
+              group_by(dep,prov,distr,edad_cat.by5,
+                       !!var
+              ) %>%
+              summarise(n=n()) %>%
+              ungroup() %>%
+              merge(output.total,by=c(c("dep","prov","distr","edad_cat.by5"),as.character(var),"n"),all=T)%>%
+              complete(nesting(dep,prov,distr),edad_cat.by5,!!var) %>% 
+              replace(is.na(.), as.integer(0)) %>%
+              mutate(date = paste0(i,"/",l,"/",k))
+          }
+          
+      sinadef_procesado <- rbind(sinadef_procesado,output)
           
           print(paste0(i,"/",l,"/",k))
           rm(output)
