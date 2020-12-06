@@ -6,10 +6,10 @@ output: html_document
 ```{r}
 options(dplyr.summarise.inform=F) 
 library(tidyverse)
-
+library(lubridate)
 source('../_funciones/func_extract_SINADEF.R', echo = TRUE, encoding="UTF-8")
 #sinadef <- read_csv("../../sinadef_20200927.csv")
-sinadef <- readRDS("../../sinadef_20200927.Rdata")
+sinadef <- readRDS("../../output/sinadef_2020-11-26.Rdata")
 
 ```
 
@@ -17,119 +17,88 @@ sinadef <- readRDS("../../sinadef_20200927.Rdata")
 
 
 ```{r}
-sinadef <- sinadef %>%  
-  sample_n(1000)
+sinadef2 <- sinadef %>% mutate(var_total = paste0(sexo,".",niv.ins,".",mue.vio) )
 
-
-x <- sinadef.n$data[[1]]
-
-
-sinadef.n <- sinadef %>%
+sinadef2.todos <- sinadef2 %>%
   mutate(annus2 = annus) %>%
+  filter(annus2 ==2017) %>%
   group_by(annus2) %>%
   nest() %>%
   mutate(extract_SINADEF = map(.x=data, 
-                               .f=~extract_SINADEF(.x,"sexo")))
+                               .f=~extract_SINADEF(.x,"var_total")))
 
 
+saveRDS(sinadef2.todos,"../../output/Long Formats/sinadef_long_v2_2017.Rdata")
+
+sinadef2.todos <- sinadef2 %>%
+  mutate(annus2 = annus) %>%
+    filter(annus2 ==2018) %>%
+  group_by(annus2) %>%
+  nest() %>%
+  mutate(extract_SINADEF = map(.x=data, 
+                               .f=~extract_SINADEF(.x,"var_total")))
 
 
+saveRDS(sinadef2.todos,"../../output/Long Formats/sinadef_long_v2_2018.Rdata")
 
+sinadef2.todos <- sinadef2 %>%
+  mutate(annus2 = annus) %>%
+    filter(annus2 ==2019) %>%
+  group_by(annus2) %>%
+  nest() %>%
+  mutate(extract_SINADEF = map(.x=data, 
+                               .f=~extract_SINADEF(.x,"var_total")))
+
+
+saveRDS(sinadef2.todos,"../../output/Long Formats/sinadef_long_v2_2019.Rdata")
+
+sinadef2.todos <- sinadef2 %>%
+  mutate(annus2 = annus) %>%
+    filter(annus2 ==2020) %>%
+  group_by(annus2) %>%
+  nest() %>%
+  mutate(extract_SINADEF = map(.x=data, 
+                               .f=~extract_SINADEF(.x,"var_total")))
+
+
+saveRDS(sinadef2.todos,"../../output/Long Formats/sinadef_long_v2_2020.Rdata")
 ```
-
-
 
 ```{r}
 sinadef_sexo <- extract_SINADEF(sinadef,"sexo")
-saveRDS(sinadef_sexo,file.path(paste0("../../sinadef_longBySex_",format(Sys.time(),"%Y%m%d"),".Rdata")))
+saveRDS(sinadef_sexo,file.path(paste0("../../output/Long Formats/sinadef_longBySex_",max(sinadef$fecha),".Rdata")))
 rm(sinadef_sexo)
 gc()
 ```
 
-
-
 ```{r}
 sinadef_niv.ins <- extract_SINADEF(sinadef,"niv.ins")
-saveRDS(sinadef_niv.ins,file.path(paste0("../../sinadef_longByNivIns_",format(Sys.time(),"%Y%m%d"),".Rdata")))
+saveRDS(sinadef_niv.ins,file.path(paste0("../../output/Long Formats/sinadef_longByNivIns_",max(sinadef$fecha),".Rdata")))
 rm(sinadef_niv.ins)
 gc()
 ```
 
-
 ```{r}
 sinadef_mue.vio <- extract_SINADEF(sinadef,"mue.vio")
-saveRDS(sinadef_mue.vio,file.path(paste0("../../sinadef_longByMueVio_",format(Sys.time(),"%Y%m%d"),".Rdata")))
+saveRDS(sinadef_mue.vio,file.path(paste0("../../output/Long Formats/sinadef_longByMueVio_",max(sinadef$fecha),".Rdata")))
 rm(sinadef_mue.vio)
 gc()
 ```
 
 ```{r}
 sinadef_tipo.seg <- extract_SINADEF(sinadef,"tipo.seg")
-saveRDS(sinadef_tipo.seg,file.path(paste0("../../sinadef_longByTipoSeg_",format(Sys.time(),"%Y%m%d"),".Rdata")))
+saveRDS(sinadef_tipo.seg,file.path(paste0("../../output/Long Formats/sinadef_longByTipoSeg_",max(sinadef$fecha),".Rdata")))
 rm(sinadef_tipo.seg)
 gc()
 ```
 
 ```{r}
 sinadef_CIE10.cat <- extract_SINADEF(sinadef,"CIE10.cat")
-saveRDS(sinadef_CIE10.cat,file.path(paste0("../../sinadef_longByCIE10cat_",format(Sys.time(),"%Y%m%d"),".Rdata")))
+saveRDS(sinadef_CIE10.cat,file.path(paste0("../../output/Long Formats/sinadef_longByCIE10cat_",max(sinadef$fecha),".Rdata")))
 rm(sinadef_CIE10.cat)
 gc()
 ```
 
-
-```{r eval = FALSE, echo = FALSE}
-sinadef_sexo %>%
-  filter(edad_cat.by5 != "Total") %>%
-  group_by(edad_cat.by5,sexo,date) %>%
-  summarize(n=sum(n))%>% 
-  ungroup() %>% 
-  group_by(week = format(as.Date(date, "%Y/%m/%d"), '%Y-%W'),
-           edad_cat.by5)%>% 
-  summarise(n=sum(n),
-            date=min(as.Date(date, "%Y/%m/%d"))
-  ) %>% ungroup() %>%
-  arrange(week) %>%
-  ggplot(aes(factor(week), edad_cat.by5)
-         ) + 
-  geom_tile(aes(fill = n),colour = "white", na.rm = TRUE) +
-  scale_fill_continuous(low = "white", high = "red") +  
-  guides(fill= guide_colourbar(title="Total Deaths"))+
-  theme_bw() + theme_minimal() + 
-  labs(title = "Weekly deaths in Perú from 2017 to 2020",
-       x = "Year", y = "Age category") +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  scale_x_discrete(breaks = c("2017-01","2018-01","2019-01","2020-01")) +
-  geom_vline(xintercept = c("2017-01","2018-01","2019-01","2020-01"),
-             linetype = "twodash")
-```
-
-```{r eval = FALSE, echo = FALSE}
-sinadef_sexo %>%
-  filter(edad_cat.by5 != "Total") %>%
-  group_by(edad_cat.by5,sexo,date) %>%
-  summarize(n=sum(n))%>% 
-  ungroup() %>% 
-  group_by(week = format(as.Date(date, "%Y/%m/%d"), '%Y-%W'),
-           edad_cat.by5, sexo)%>% 
-  summarise(n=sum(n),
-            date=min(as.Date(date, "%Y/%m/%d"))
-  ) %>% ungroup() %>%
-  arrange(week) %>%
-  ggplot(aes(factor(week), edad_cat.by5)
-         ) + 
-  geom_tile(aes(fill = n),colour = "white", na.rm = TRUE) +
-  scale_fill_continuous(low = "white", high = "red") +  
-  guides(fill= guide_colourbar(title="Total Deaths"))+
-  theme_bw() + theme_minimal() + 
-  labs(title = "Weekly deaths in Perú from 2017 to 2020",
-       x = "Year", y = "Age category") +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  scale_x_discrete(breaks = c("2017-01","2018-01","2019-01","2020-01")) +
-  geom_vline(xintercept = c("2017-01","2018-01","2019-01","2020-01"),
-             linetype = "twodash")+
-  facet_grid(rows = vars(sexo))
-```
 
 
 
