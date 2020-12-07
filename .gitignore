@@ -3,3 +3,4 @@ sinadef_*.csv
 sinadef_*.Rdata
 desktop.ini
 output/
+.Rhistory

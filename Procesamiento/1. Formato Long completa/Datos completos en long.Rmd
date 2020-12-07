@@ -10,7 +10,6 @@ library(lubridate)
 source('../_funciones/func_extract_SINADEF.R', echo = TRUE, encoding="UTF-8")
 #sinadef <- read_csv("../../sinadef_20200927.csv")
 sinadef <- readRDS("../../output/sinadef_2020-11-26.Rdata")
-
 ```
 
 
@@ -99,6 +98,75 @@ rm(sinadef_CIE10.cat)
 gc()
 ```
 
+## Long by years
+
+```{r}
+sinadef <- readRDS("../../output/Long Formats/sinadef_long_v2_2017.Rdata")
+
+df_2017 <- sinadef$extract_SINADEF[[1]] %>% 
+  group_by(dep,prov,distr,edad_cat.by5,var_total,week) %>% 
+  summarise(N = sum(n)) %>% 
+  filter(edad_cat.by5!="Total")  %>% 
+  ungroup() %>%
+  separate(col=c("var_total"), into=c("Sexo","Educacion","Accidente"),sep="[.]")
 
 
+saveRDS(df_2017,file.path(paste0("../../output/Long Formats/2017_long",".Rdata")))
+```
+
+```{r}
+sinadef <- readRDS("../../output/Long Formats/sinadef_long_v2_2018.Rdata")
+
+df_2018 <- sinadef$extract_SINADEF[[1]] %>% group_by(dep,prov,distr,edad_cat.by5,var_total,week) %>% summarise(N = sum(n)) %>% filter(edad_cat.by5!="Total")  %>% 
+  ungroup() %>%
+  separate(col=c("var_total"), into=c("Sexo","Educacion","Accidente"),sep="[.]")
+saveRDS(df_2018,file.path(paste0("../../output/Long Formats/2018_long",".Rdata")))
+```
+
+```{r}
+sinadef <- readRDS("../../output/Long Formats/sinadef_long_v2_2019.Rdata")
+
+df_2019 <- sinadef$extract_SINADEF[[1]] %>% group_by(dep,prov,distr,edad_cat.by5,var_total,week) %>% summarise(N = sum(n)) %>% filter(edad_cat.by5!="Total")  %>% 
+  ungroup() %>%
+  separate(col=c("var_total"), into=c("Sexo","Educacion","Accidente"),sep="[.]")
+saveRDS(df_2019,file.path(paste0("../../output/Long Formats/2019_long",".Rdata")))
+```
+
+```{r}
+sinadef <- readRDS("../../output/Long Formats/sinadef_long_v2_2020.Rdata")
+
+df_2020 <- sinadef$extract_SINADEF[[1]] %>% group_by(dep,prov,distr,edad_cat.by5,var_total,week) %>% summarise(N = sum(n)) %>% filter(edad_cat.by5!="Total")  %>% 
+  ungroup() %>%
+  separate(col=c("var_total"), into=c("Sexo","Educacion","Accidente"),sep="[.]")
+saveRDS(df_2020,file.path(paste0("../../output/Long Formats/2020_long",".Rdata")))
+```
+
+
+
+
+
+
+```{r}
+# b <- a %>% 
+#   ungroup() %>%
+#   separate(col=c("var_total"), into=c("Sexo","Educacion","Accidente"),sep="[.]") %>%
+#   mutate(Accidente = replace(Accidente, Accidente =="ACCIDENTE DE TRABAJO" |
+#                                 Accidente =="HOMICIDIO"|
+#                                 Accidente =="OTROS"|
+#                                 Accidente =="ACCIDENTE DE TRANSITO"|
+#                                 Accidente =="SUICIDIO",
+#                              "MUERTE VIOLENTA"
+#                              )) %>%
+#   group_by(dep,prov,distr,edad_cat.by5,Sexo,Educacion,Accidente,week)%>% 
+#   summarise(N = sum(N))
+# 
+# b <- head(a,10)
+# 
+# b
+# 
+# b %>% 
+#   ungroup() %>%
+#   separate(col=c("var_total"), into=c("Sexo","Educacion","Accidente"),sep="[.]")
+
+```
 
