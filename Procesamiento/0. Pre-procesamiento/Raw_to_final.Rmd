@@ -20,7 +20,7 @@ Se importan los datos desde el archivo excel al cúal se accede desde el *dashbo
 library(readxl)
 library(readr)
 library(tidyverse)
-sinadef <- read_excel("./SINADEF_DATOS_ABIERTOS_26112020.xlsx",col_names = FALSE)
+sinadef <- read_excel("./SINADEF_DATOS_ABIERTOS_10122020.xlsx",col_names = FALSE)
 
 ```
 
@@ -46,7 +46,7 @@ sinadef <- sinadef[-3:-1,-1]
 ```{r, error=F, warning=F,message=F}
 sinadef <- sinadef %>% 
          # Ubicación geográfica de domicilio
-  rename(dep = `DEPARTAMENTO DOMICILIO`,
+  dplyr::rename(dep = `DEPARTAMENTO DOMICILIO`,
          prov = `PROVINCIA DOMICILIO`,
          distr = `DISTRITO DOMICILIO`,
          # Día de la defunción
