@@ -33,35 +33,35 @@ extract_SINADEF <- function(df,var,dates.by="weekly") {
         k <- dies.list[k]
         
         if (if(i==format(Sys.Date(), "%Y")){l<=format(Sys.Date(), "%m")} else{TRUE} &
-            if(l==format(Sys.Date(), "%m")){k<=format(Sys.Date(), "%d")} else{TRUE}
+            if(l==format(Sys.Date(), "%m") & i==format(Sys.Date(), "%Y")){k<=format(Sys.Date(), "%d")} else{TRUE}
         ){
           
           df.filtered <- df %>% 
-            filter(annus==i & mensis==l & dies==k
+            dplyr::filter(annus==as.character(i) & mensis==as.character(l) & dies==as.character(k)
             )
           
           output.total <- df.filtered %>%
             group_by(dep,prov,distr,
                      !!var
             ) %>%
-            summarise(Total=n()) %>%
+            dplyr::summarise(Total=n()) %>%
             ungroup()%>%
             gather(edad_cat.by5,n,Total)
           
           # Se extraen los datos y se añaden los totales
           if (dates.by=="weekly") {
-          
-          output <- df.filtered %>%
-            group_by(dep,prov,distr,edad_cat.by5,
-                     !!var
-            ) %>%
-            summarise(n=n()) %>%
-            ungroup() %>%
-            merge(output.total,by=c(c("dep","prov","distr","edad_cat.by5"),as.character(var),"n"),all=T)%>%
-            complete(nesting(dep,prov,distr),edad_cat.by5,!!var) %>% 
-            replace(is.na(.), as.integer(0)) %>%
-            mutate(date = paste0(i,"/",l,"/",k),
-                   week = week(date))
+            
+            output <- df.filtered %>%
+              group_by(dep,prov,distr,edad_cat.by5,
+                       !!var
+              ) %>%
+              dplyr::summarise(n=n()) %>%
+              ungroup() %>%
+              merge(output.total,by=c(c("dep","prov","distr","edad_cat.by5"),as.character(var),"n"),all=T) %>%
+              #complete(nesting(dep,prov,distr),edad_cat.by5,!!var) %>% 
+              replace(is.na(.), as.integer(0)) %>%
+              dplyr::mutate(date = paste0(i,"/",l,"/",k),
+                            date = week(date))
           }
           
           if (dates.by=="daily") {
@@ -70,21 +70,33 @@ extract_SINADEF <- function(df,var,dates.by="weekly") {
               group_by(dep,prov,distr,edad_cat.by5,
                        !!var
               ) %>%
-              summarise(n=n()) %>%
+              dplyr::summarise(n=n()) %>%
               ungroup() %>%
               merge(output.total,by=c(c("dep","prov","distr","edad_cat.by5"),as.character(var),"n"),all=T)%>%
-              complete(nesting(dep,prov,distr),edad_cat.by5,!!var) %>% 
+              tidyr::complete(nesting(dep,prov,distr),edad_cat.by5,!!var) %>% 
               replace(is.na(.), as.integer(0)) %>%
-              mutate(date = paste0(i,"/",l,"/",k))
+              dplyr::mutate(date = paste0(i,"/",l,"/",k))
           }
           
-      sinadef_procesado <- rbind(sinadef_procesado,output)
+          sinadef_procesado <- rbind(sinadef_procesado,output)
           
           print(paste0(i,"/",l,"/",k))
           rm(output)
         }
       }
+      
+      sinadef_procesado <- sinadef_procesado  %>%
+        dplyr::group_by(dep,prov,distr,edad_cat.by5,
+                        !!var,date)%>%
+        dplyr::summarise(n=sum(n,na.rm=T)) %>% ungroup()
+      
     }
+    
+    print("Completing and nesting - Might take a while")
+    sinadef_procesado <- sinadef_procesado  %>%
+      tidyr::complete(nesting(dep,prov,distr),edad_cat.by5,!!var,date)
+    
+    
   }
   # Se extraen los totales por grupos de edad quinquenales
   

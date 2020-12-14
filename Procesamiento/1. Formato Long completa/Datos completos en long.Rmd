@@ -16,14 +16,18 @@ sinadef <- readRDS("../../output/sinadef_2020-11-26.Rdata")
 
 
 ```{r}
-sinadef2 <- sinadef %>% mutate(var_total = paste0(sexo,".",niv.ins,".",mue.vio) )
+sinadef.long <- sinadef %>% dplyr::mutate(mue.vio = replace(mue.vio,
+                                                            mue.vio!="NO REGISTRO/NA",
+                                                            "MUERTE VIOLENTA"))
+  
+sinadef2 <- sinadef.long %>% mutate(var_total = paste0(sexo,".",niv.ins,".",mue.vio) )
 
 sinadef2.todos <- sinadef2 %>%
-  mutate(annus2 = annus) %>%
-  filter(annus2 ==2017) %>%
-  group_by(annus2) %>%
+   dplyr::mutate(annus2 = annus) %>%
+   dplyr::filter(annus2 ==2017) %>%
+   dplyr::group_by(annus2) %>%
   nest() %>%
-  mutate(extract_SINADEF = map(.x=data, 
+   dplyr::mutate(extract_SINADEF = map(.x=data, 
                                .f=~extract_SINADEF(.x,"var_total")))
 
 
