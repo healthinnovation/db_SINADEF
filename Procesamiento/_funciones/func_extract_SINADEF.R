@@ -94,8 +94,8 @@ extract_SINADEF <- function(df,var,dates.by="weekly") {
     
     print("Completing and nesting - Might take a while")
     sinadef_procesado <- sinadef_procesado  %>%
-      tidyr::complete(nesting(dep,prov,distr),edad_cat.by5,!!var,date)
-    
+      tidyr::complete(nesting(dep,prov,distr),edad_cat.by5,!!var,date)%>% 
+      replace(is.na(.), as.integer(0))
     
   }
   # Se extraen los totales por grupos de edad quinquenales

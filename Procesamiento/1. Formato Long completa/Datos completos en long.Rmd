@@ -104,6 +104,59 @@ gc()
 
 ## Long by years
 
+
+
+```{r}
+# 2017
+
+df <- readRDS("../../output/Long Formats/sinadef_long_v2_2017.Rdata") %>% 
+  .[1,3] %>% 
+  pull(.) %>%
+  .[[1]] 
+
+
+df %>%
+  separate(col=c("var_total"), into=c("Sexo","Educacion","Accidente"),sep="[.]") %>%
+  saveRDS(file.path(paste0("../../output/Long Formats/2017_long_",max(sinadef$fecha),".Rdata")))
+
+
+# 2018
+
+df <- readRDS("../../output/Long Formats/sinadef_long_v2_2018.Rdata")  %>% 
+  .[1,3] %>% 
+  pull(.) %>%
+  .[[1]] 
+
+df %>%
+  separate(col=c("var_total"), into=c("Sexo","Educacion","Accidente"),sep="[.]") %>%
+  saveRDS(file.path(paste0("../../output/Long Formats/2018_long_",max(sinadef$fecha),".Rdata")))
+
+
+# 2019
+
+df <- readRDS("../../output/Long Formats/sinadef_long_v2_2019.Rdata") %>% 
+  .[1,3] %>% 
+  pull(.) %>%
+  .[[1]] 
+
+df %>%
+  separate(col=c("var_total"), into=c("Sexo","Educacion","Accidente"),sep="[.]") %>%
+  saveRDS(file.path(paste0("../../output/Long Formats/2019_long_",max(sinadef$fecha),".Rdata")))
+
+# 2020
+
+df <- readRDS("../../output/Long Formats/sinadef_long_v2_2020.Rdata") %>% 
+  .[1,3] %>% 
+  pull(.) %>%
+  .[[1]] 
+
+df %>%
+  separate(col=c("var_total"), into=c("Sexo","Educacion","Accidente"),sep="[.]") %>%
+  saveRDS(file.path(paste0("../../output/Long Formats/2020_long_",max(sinadef$fecha),".Rdata")))
+```
+
+
+
 ```{r}
 sinadef <- readRDS("../../output/Long Formats/sinadef_long_v2_2017.Rdata")
 

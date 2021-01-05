@@ -9,6 +9,12 @@ El archivo principal (base de datos curada) es "sinadef_YYMMDD.Rdata".
 
 Este archivo es el resultado del pre-procesamiento realizado en "./Procesamiento/0. Pre-procesamiento".
 
+Un segundo grupo de archivos en formato "long" se encuentran nombrados como "sinadef_longBy[variable]_YYMMDD.Rdata" y son procesados en "./Procesamiento/1- Formato Long completa".
+
+![](https://raw.githubusercontent.com/healthinnovation/db_SINADEF/main/Documentos/Workflow%20de%20datos.png)
+
+La estructura de "sinadef_YYMMDD.Rdata" es:
+
 | Domicilio  | Sexo | Edad |
 | ------------- | ------------- |  ------------- |
 | Distrito A  | Masculino  | 15 |
@@ -18,7 +24,7 @@ Este archivo es el resultado del pre-procesamiento realizado en "./Procesamiento
 | Distrito C  | Masculino | 23  |
 
 
-Los archivos con formato "sinadef_longBy[variable]_YYMMDD.Rdata" se encuentran ordenados en formato long.
+La estructura de "sinadef_longBy[variable]_YYMMDD.Rdata" es:
 
 | Domicilio  | Sexo | Número |
 | ------------- | ------------- |  ------------- |
@@ -29,6 +35,7 @@ Los archivos con formato "sinadef_longBy[variable]_YYMMDD.Rdata" se encuentran o
 | Distrito C  | Femenino  | 1 |
 | Distrito C  | Masculino   | 1 |
 
+# Bibliografía del SINADEF
 
 El SINADEF fue descrito y presentado en el artículo https://rpmesp.ins.gob.pe/index.php/rpmesp/article/view/3913/3111
 Un resumen del mismo (en inglés) se encuentra aquí: https://crvsgateway.info/file/16356/3011

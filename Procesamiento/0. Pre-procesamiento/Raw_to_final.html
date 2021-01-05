@@ -366,72 +366,118 @@ summary {
 </div>
 
 
+<style type="text/css">
+pre {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+pre[class] {
+  max-height: 100px;
+}
+
+.scroll-100 {
+  max-height: 150px;
+  overflow-y: auto;
+  background-color: inherit;
+}
+</style>
 <p>El Sistema Informático Nacional de Defunciones (SINADEF) es el resultado del trabajo conjunto de RENIEC y MINSA para el desarrollo de un sistema informático para el ingreso y registro de datos de fallecidos, el cual entro en funcionamiento en 2017.</p>
 <p>Información de SINADEF:</p>
 <ul>
 <li><a href="https://www.minsa.gob.pe/defunciones/">Página web Oficial</a></li>
-<li><a href="https://twitter.com/javargashe/status/1277428266991747073">Hilo en Twitter acerca de su historia</a></li>
+<li><a href="https://twitter.com/javargashe/status/1277428266991747073">Hilo en Twitter acerca de su historia - Copia en ./Documentos</a></li>
 </ul>
 <div id="importación-de-datos" class="section level1">
 <h1>Importación de datos</h1>
 <p>Los datos del SINADEF son descargados desde el <a href="https://public.tableau.com/profile/ogei.minsa.peru#!/vizhome/Tablero_Control_Defunciones_0/Tablero">Tablero de Control de Defunciones</a>; visualización en Tableu elaborada por el MINSA.</p>
-<p>Se importan los datos desde el archivo excel al cúal se accede desde el <em>dashboard</em> en Tableu</p>
-<pre class="r"><code>library(readxl)
-library(readr)
-library(tidyverse)
-sinadef &lt;- read_excel(&quot;./SINADEF_DATOS_ABIERTOS_21092020.xlsx&quot;,
-                      col_names = FALSE)</code></pre>
+<p>Se importan los datos desde el archivo excel al cúal se accede desde el <em>dashboard</em> en Tableu o desde Dropbox (revisar acceso en <a href="https://github.com/healthinnovation/db_SINADEF" class="uri">https://github.com/healthinnovation/db_SINADEF</a>)</p>
+<pre class="r"><code>#drop_auth() 
+#drop_download(&quot;db_SINADEF/SINADEF_DATOS_ABIERTOS_03012021.xlsx&quot;,overwrite = T)
+
+sinadef &lt;- read_excel(&quot;./SINADEF_DATOS_ABIERTOS_03012021.xlsx&quot;,col_names = FALSE)</code></pre>
+<p>Y se configuran opciones de la exportación</p>
+<ul>
+<li>output.csv: If TRUE, el output incluye un archivo .csv (por defecto es .Rdata).</li>
+<li>output.excl: if TRUE, el output incluye una versión “nonproc” o no procesada ni filtrada por valores faltantes.</li>
+<li>dropbox: if TRUE, el output se sube a la carpeta de Dropbox.</li>
+</ul>
+<pre class="r"><code>output.csv&lt;- FALSE
+output.excl &lt;- TRUE
+dropbox &lt;- FALSE</code></pre>
 <p>El archivo contiene información que no son parte de la base de datos (titulos, imagenes, etc.). Esto es removido.</p>
 <pre class="r"><code>names(sinadef) &lt;- sinadef[3,]
 sinadef &lt;- sinadef[-3:-1,-1]</code></pre>
 </div>
 <div id="limpieza-de-datos" class="section level1">
 <h1>Limpieza de datos</h1>
-<div id="cambio-de-variables" class="section level2">
-<h2>Cambio de variables</h2>
 <pre class="r"><code>sinadef &lt;- sinadef %&gt;% 
-         # Ubicación geográfica de domicilio
-  rename(dep = `DEPARTAMENTO DOMICILIO`,
-         prov = `PROVINCIA DOMICILIO`,
-         distr = `DISTRITO DOMICILIO`,
-         # Día de la defunción
-         fecha = FECHA,
-         annus = `AÑO`,
-         mensis = MES,
-         # Edad
-         edad_cat = `TIEMPO EDAD`, 
-         edad_by.cat = EDAD,
-         # Características sociodemográficas
-         sexo = SEXO,
-         niv.ins = `NIVEL DE INSTRUCCIÓN`,
-         est.civ = `ESTADO CIVIL`,
-         tipo.seg = `TIPO SEGURO`,
-         # Información acerca de la defunción
-         necro = NECROPSIA,
-         mue.vio = `MUERTE VIOLENTA`,
-         lugar = `TIPO LUGAR`,
-         institucion = INSTITUCION
-         ) </code></pre>
-</div>
+  # Ubicación geográfica de domicilio
+  dplyr::transmute(
+    pais = `PAIS DOMICILIO`,
+    reg = `DEPARTAMENTO DOMICILIO`,
+    prov = `PROVINCIA DOMICILIO`,
+    distr = `DISTRITO DOMICILIO`,
+    
+    distr.original = distr,
+    prov.original = prov,
+    reg.original =reg,
+    pais.original = pais,
+    # Día de la defunción
+    fecha = FECHA,
+    annus = `AÑO`,
+    mensis = MES,
+    # Edad
+    edad_cat = `TIEMPO EDAD`, 
+    edad_by.cat = EDAD,
+    # Características sociodemográficas
+    sexo = SEXO,
+    sexo.original = sexo,
+    
+    niv.ins = `NIVEL DE INSTRUCCIÓN`,
+    niv.ins.original = niv.ins,
+    
+    est.civ = `ESTADO CIVIL`,
+    est.civ.original = est.civ,
+    
+    tipo.seg = `TIPO SEGURO`,
+    tipo.seg.original = tipo.seg,
+    
+    # Información acerca de la defunción
+    necro = NECROPSIA,
+    necro.original = necro,
+    
+    
+    mue.vio = `MUERTE VIOLENTA`,
+    mue.vio.original = mue.vio,
+    
+    lugar = `TIPO LUGAR`,
+    lugar.original = lugar,
+    
+    institucion = INSTITUCION,
+    institucion.original = institucion,
+    CIE10.A=`CAUSA A (CIE-X)`,
+    CIE10.B=`CAUSA B (CIE-X)`,
+    CIE10.C=`CAUSA C (CIE-X)`,
+    CIE10.D=`CAUSA D (CIE-X)`,
+    CIE10.E=`CAUSA E (CIE-X)`,
+    CIE10.F=`CAUSA F (CIE-X)` 
+  ) </code></pre>
 <div id="edades" class="section level2">
 <h2>Edades</h2>
-<p>Se crea una variable que transforma todas las edades a años.</p>
+<p>Se crea una variable que transforma todas las edades a años. (<code>edad</code>)</p>
 <pre class="r"><code>sinadef &lt;- sinadef %&gt;%
   dplyr::mutate(
-    edad = if_else(edad_cat == &quot;MESES&quot; | edad_cat == &quot;DIAS&quot; | edad_cat == &quot;HORAS&quot; | 
-                     edad_cat == &quot;MINUTOS&quot; | edad_cat == &quot;SEGUNDOS&quot;, 
-                   as.integer(0), 
-                   as.integer(edad_by.cat)
+    edad = ifelse(edad_cat == &quot;MESES&quot; | edad_cat == &quot;DIAS&quot; | edad_cat == &quot;HORAS&quot; | 
+                    edad_cat == &quot;MINUTOS&quot; | edad_cat == &quot;SEGUNDOS&quot;, 
+                  as.integer(0),
+                  ifelse(edad_cat==&quot;IGNORADO&quot; | edad_cat == &quot;SIN REGISTRO&quot; ,NA,
+                         as.integer(edad_by.cat))
     )
   )</code></pre>
-<pre><code>## Warning: Problem with `mutate()` input `edad`.
-## i NAs introduced by coercion
-## i Input `edad` is `if_else(...)`.</code></pre>
-<pre><code>## Warning in replace_with(out, !condition, false, fmt_args(~false), glue(&quot;length
-## of {fmt_args(~condition)}&quot;)): NAs introduced by coercion</code></pre>
-<p>También se genera una columna con la edad categorizada por grupos quinquenales.</p>
+<p>También se genera una columna con la edad categorizada por grupos quinquenales. (<code>edad_cat.by5</code>)</p>
 <pre class="r"><code>sinadef &lt;- sinadef %&gt;%
-  mutate(edad_cat.by5 = if_else(edad &gt;= 0 &amp; edad&lt;=4, &quot;00-04&quot;,
+ dplyr::mutate(edad_cat.by5 = if_else(edad &gt;= 0 &amp; edad&lt;=4, &quot;00-04&quot;,
                             if_else(edad &gt;= 5 &amp; edad&lt;=9, &quot;05-09&quot;,
                                     if_else(edad &gt;= 10 &amp; edad&lt;=14, &quot;10-14&quot;,
                                             if_else(edad &gt;= 15 &amp; edad&lt;=19, &quot;15-19&quot;,
@@ -454,37 +500,18 @@ sinadef &lt;- sinadef[-3:-1,-1]</code></pre>
 </div>
 <div id="fechas" class="section level2">
 <h2>Fechas</h2>
+<p>Algunas fechas son corregidas, y las semanas añadidas. (<code>week</code>)</p>
 <pre class="r"><code>sinadef &lt;- sinadef %&gt;%
-  mutate(dies = format(as.Date(fecha, format=&quot;%Y-%m-%d&quot;),&quot;%d&quot;)
+  dplyr::mutate(dies = format(as.Date(fecha, format=&quot;%Y-%m-%d&quot;),&quot;%d&quot;),
+                septem = week(as.Date(fecha, format=&quot;%Y-%m-%d&quot;))
   )</code></pre>
-</div>
-<div id="exclusión-de-datos-incompletos" class="section level2">
-<h2>Exclusión de datos incompletos</h2>
-<p>Se excluyen los datos de:</p>
-<ul>
-<li>Observaciones con una edad irregular (revisar comentarios) o sin registro de su edad (no se tiene claro si su edad esta en dias, meses, años, etc.)</li>
-<li>Observaciones con sexo indeterminado o sin registro</li>
-<li>Observaciones sin nivel de instrucción (sin registro)</li>
-<li>Observaciones sin información a nivel de departamento, provincia o distrito.</li>
-<li>Se mantienene aquellos con país de domicilio en PERÚ.</li>
-</ul>
-<pre class="r"><code>sinadef &lt;- sinadef %&gt;%
-  filter(!is.na(edad) &amp; edad&lt;=123 &amp; edad_cat != &quot;SIN REGISTRO&quot;&amp; 
-           sexo!=&quot;INDETERMINADO&quot; &amp; sexo != &quot;SIN REGISTRO&quot;&amp; 
-           niv.ins != &quot;SIN REGISTRO&quot;&amp; 
-           `PAIS DOMICILIO` == &quot;PERU&quot; &amp; dep!= &quot;SIN REGISTRO&quot; &amp; 
-           prov!= &quot;SIN REGISTRO&quot;&amp; distr!= &quot;SIN REGISTRO&quot; &amp;
-           prov != &quot;ARICA&quot;)
-
-  # La persona más longeva de Perú esta registrada en los medios (123 años) a pesar de ser algo &quot;debatible&quot;.
-  # https://es.wikipedia.org/wiki/Andrea_Guti%C3%A9rrez_Cahuana
-  # Sin embargo, la base presenta a una persona de 148 años. Esta es filtrada</code></pre>
 </div>
 <div id="limpieza-de-datos-categóricos" class="section level2">
 <h2>Limpieza de datos categóricos</h2>
 <p>Algunas categorias o clasificaciones son recodificadas para que sean más uniformes entre ellas.</p>
 <pre class="r"><code>sinadef &lt;- sinadef %&gt;%
-  mutate(lugar = ifelse(lugar ==&quot;OTRO&quot;, &quot;OTROS&quot;,lugar),
+  dplyr::mutate(
+         lugar = ifelse(lugar ==&quot;OTRO&quot;, &quot;OTROS&quot;,lugar),
          mue.vio = ifelse(mue.vio ==&quot;OTRO ACCIDENTE&quot;, &quot;OTROS&quot;,mue.vio),
          tipo.seg = ifelse(tipo.seg ==&quot;PRIVADOS&quot;, &quot;PRIVADO&quot;,tipo.seg),
          institucion = ifelse(institucion ==&quot;SANIDAD DE LA POLICIA NACIONAL DEL PERU&quot;, &quot;SANIDAD PNP&quot;,
@@ -494,11 +521,23 @@ sinadef &lt;- sinadef[-3:-1,-1]</code></pre>
 </div>
 <div id="niveles-de-instrucción" class="section level2">
 <h2>Niveles de Instrucción</h2>
-<p>Se crea una nueva variable agrupando categorias del “Nivel de Instrucción”.</p>
+<p>Se crea una nueva variable agrupando categorias del “Nivel de Instrucción” y de “Muerte violenta”.</p>
+<p>Se agrupan:</p>
+<ul>
+<li>“INICIAL / PRE-ESCOLAR”, “NINGUN NIVEL / ILETRADO” y “PRIMARIA INCOMPLETA” en <strong>“SIN EDUCACION BÁSICA”</strong>.</li>
+<li>“SECUNDARIA INCOMPLETA” en <strong>“PRIMARIA COMPLETA”</strong>.</li>
+<li>“SUPERIOR NO UNIV. INC.” y “SUPERIOR UNIV. INC.” en <strong>“SECUNDARIA COMPLETA”</strong>.</li>
+<li>“EDUCACION SUPERIOR” y “SUPERIOR NO UNIV. COMP.” en <strong>“EDUCACION SUPERIOR”</strong>.</li>
+</ul>
+<p>Para muerte violenta se agrupa:</p>
+<ul>
+<li>“NO SE CONOCE” Y “SIN REGISTRO” EN <strong>“NO REGISTRO/NA”</strong>.</li>
+</ul>
 <pre class="r"><code>sinadef &lt;- sinadef %&gt;%
-  mutate(niv.ins = replace(niv.ins, niv.ins==&quot;INICIAL / PRE-ESCOLAR&quot;,&quot;SIN EDUCACION&quot;) ,
-         niv.ins = replace(niv.ins, niv.ins==&quot;NINGUN NIVEL / ILETRADO&quot;,&quot;SIN EDUCACION&quot;),
-         niv.ins = replace(niv.ins, niv.ins==&quot;PRIMARIA INCOMPLETA&quot;,&quot;SIN EDUCACION&quot;),
+  dplyr::mutate(
+         niv.ins = replace(niv.ins, niv.ins==&quot;INICIAL / PRE-ESCOLAR&quot;,&quot;SIN EDUCACION BASICA&quot;) ,
+         niv.ins = replace(niv.ins, niv.ins==&quot;NINGUN NIVEL / ILETRADO&quot;,&quot;SIN EDUCACION BASICA&quot;),
+         niv.ins = replace(niv.ins, niv.ins==&quot;PRIMARIA INCOMPLETA&quot;,&quot;SIN EDUCACION BASICA&quot;),
          niv.ins = replace(niv.ins, niv.ins==&quot;SECUNDARIA INCOMPLETA&quot;,&quot;PRIMARIA COMPLETA&quot;),
          niv.ins = replace(niv.ins, niv.ins==&quot;SUPERIOR NO UNIV. INC.&quot;,&quot;SECUNDARIA COMPLETA&quot;),
          niv.ins = replace(niv.ins, niv.ins==&quot;SUPERIOR UNIV. INC.&quot;,&quot;SECUNDARIA COMPLETA&quot;),
@@ -508,22 +547,23 @@ sinadef &lt;- sinadef[-3:-1,-1]</code></pre>
          mue.vio = replace(mue.vio, mue.vio==&quot;SIN REGISTRO&quot;,&quot;NO REGISTRO/NA&quot;)
   )</code></pre>
 </div>
-<div id="correcciones-geográficas" class="section level2">
-<h2>Correcciones geográficas</h2>
-<pre class="r"><code>sinadef &lt;- sinadef %&gt;%
-  mutate(distr =gsub(&quot;_&quot;, &quot; &quot;,gsub(&quot;-&quot;, &quot; &quot;, iconv(distr,
-                                                   from=&quot;UTF-8&quot;,
-                                                   to=&quot;ASCII//TRANSLIT&quot;), fixed=TRUE), fixed=TRUE),
-         prov = iconv(prov,
-                      from=&quot;UTF-8&quot;,
-                      to=&quot;ASCII//TRANSLIT&quot;),
-         dep = iconv(dep,
-                     from=&quot;UTF-8&quot;,
-                     to=&quot;ASCII//TRANSLIT&quot;)
-  ) </code></pre>
+<div id="modificación-de-nombres-administrativos." class="section level2">
+<h2>Modificación de nombres administrativos.</h2>
 <p>Se adaptan los nombres de distritos, provincias y departamentos.</p>
 <pre class="r"><code>sinadef &lt;- sinadef %&gt;%
-  mutate(distr = ifelse(distr == &quot;SANTA RITA DE SIHUAS&quot;,&quot;SANTA RITA DE SIGUAS&quot;,
+  dplyr::mutate(
+         distr =gsub(&quot;_&quot;, &quot; &quot;,gsub(&quot;-&quot;, &quot; &quot;, iconv(distr,
+                                                   from=&quot;UTF-8&quot;,
+                                                   to=&quot;ASCII//TRANSLIT&quot;), fixed=TRUE), fixed=TRUE),
+         prov = gsub(&quot;_&quot;, &quot; &quot;,gsub(&quot;-&quot;, &quot; &quot;, iconv(prov,
+                                                   from=&quot;UTF-8&quot;,
+                                                   to=&quot;ASCII//TRANSLIT&quot;), fixed=TRUE), fixed=TRUE),
+         reg = gsub(&quot;_&quot;, &quot; &quot;,gsub(&quot;-&quot;, &quot; &quot;, iconv(reg,
+                                                   from=&quot;UTF-8&quot;,
+                                                   to=&quot;ASCII//TRANSLIT&quot;), fixed=TRUE), fixed=TRUE)
+  )</code></pre>
+<pre class="r"><code>sinadef &lt;- sinadef %&gt;%
+  dplyr::mutate(distr = ifelse(distr == &quot;SANTA RITA DE SIHUAS&quot;,&quot;SANTA RITA DE SIGUAS&quot;,
                         ifelse(distr ==&quot;SAN FCO DE ASIS DE YARUSYACAN&quot;,&quot;SAN FRANCISCO DE ASIS DE YARUSYACAN&quot;,
                                ifelse(distr ==&quot;RAIMONDI&quot;,&quot;RAYMONDI&quot;,
                                       ifelse(distr ==&quot;CASPIZAPA&quot;,&quot;CASPISAPA&quot;,
@@ -543,33 +583,33 @@ sinadef &lt;- sinadef[-3:-1,-1]</code></pre>
                                ifelse(distr==&quot;CASTA&quot;,&quot;SAN PEDRO DE CASTA&quot;,
                                       ifelse(distr==&quot;APARICIO POMARES (CHUPAN)&quot;,&quot;APARICIO POMARES&quot;,distr))))
   ) %&gt;%
-  mutate(dep = ifelse(distr==&quot;SAYAPULLO&quot;,&quot;LA LIBERTAD&quot;,
+  dplyr::mutate(reg = ifelse(distr==&quot;SAYAPULLO&quot;,&quot;LA LIBERTAD&quot;,
                       ifelse(distr==&quot;HUANDO&quot;,&quot;HUANCAVELICA&quot;,
-                             ifelse(distr==&quot;HUALLANCA&quot; &amp; dep ==&quot;HUANUCO&quot;,&quot;SIN REGISTRO&quot;,
-                                    ifelse(distr==&quot;HUACHOCOLPA&quot; &amp; dep==&quot;JUNIN&quot;,&quot;HUANCAVELICA&quot;,
+                             ifelse(distr==&quot;HUALLANCA&quot; &amp; reg ==&quot;HUANUCO&quot;,&quot;SIN REGISTRO&quot;,
+                                    ifelse(distr==&quot;HUACHOCOLPA&quot; &amp; reg==&quot;JUNIN&quot;,&quot;HUANCAVELICA&quot;,
                                            ifelse(distr == &quot;MASISEA&quot;,&quot;UCAYALI&quot;,
-                                                  ifelse(distr==&quot;CASCAS&quot;,&quot;LA LIBERTAD&quot;,dep)))))),
+                                                  ifelse(distr==&quot;CASCAS&quot;,&quot;LA LIBERTAD&quot;,reg)))))),
          prov = ifelse(distr==&quot;SAYAPULLO&quot;,&quot;GRAN CHIMU&quot;,
                        ifelse(distr==&quot;HUANDO&quot;,&quot;HUANCAVELICA&quot;,
                               ifelse(distr==&quot;PACHAMARCA&quot;,&quot;CHURCAMPA&quot;,
                                      ifelse(distr==&quot;BANOS&quot;,&quot;LAURICOCHA&quot;,
                                             ifelse(distr==&quot;CHAVINILLO&quot;,&quot;YAROWILCA&quot;,
-                                                   ifelse((distr==&quot;JESUS&quot;|distr==&quot;SAN MIGUEL DE CAURI&quot;) &amp; dep==&quot;HUANUCO&quot;,&quot;LAURICOCHA&quot;,prov)))))),
-         prov = ifelse((distr == &quot;CAHUAPANAS&quot;| distr == &quot;MANSERICHE&quot;| distr == &quot;MORONA&quot;| distr == &quot;PASTAZA&quot;) &amp; dep ==&quot;LORETO&quot;, &quot;DATEM DEL MARANON&quot;,
+                                                   ifelse((distr==&quot;JESUS&quot;|distr==&quot;SAN MIGUEL DE CAURI&quot;) &amp; reg==&quot;HUANUCO&quot;,&quot;LAURICOCHA&quot;,prov)))))),
+         prov = ifelse((distr == &quot;CAHUAPANAS&quot;| distr == &quot;MANSERICHE&quot;| distr == &quot;MORONA&quot;| distr == &quot;PASTAZA&quot;) &amp; reg ==&quot;LORETO&quot;, &quot;DATEM DEL MARANON&quot;,
                        ifelse(distr==&quot;PUTUMAYO&quot;,&quot;PUTUMAYO&quot;,
                               ifelse(distr==&quot;TENIENTE MANUEL CLAVERO&quot;,&quot;PUTUMAYO&quot;,
                                      ifelse(distr==&quot;CASCAS&quot;,&quot;GRAN CHIMU&quot;,
                                             ifelse(distr==&quot;JACAS CHICO&quot;,&quot;YAROWILCA&quot;,
                                                    ifelse(distr==&quot;OBAS&quot;,&quot;YAROWILCA&quot;,
-                                                          ifelse(distr==&quot;BARRANCA&quot;&amp; dep==&quot;LORETO&quot;,&quot;DATEM DEL MARANON&quot;,prov))))))),
+                                                          ifelse(distr==&quot;BARRANCA&quot;&amp; reg==&quot;LORETO&quot;,&quot;DATEM DEL MARANON&quot;,prov))))))),
          distr = ifelse(distr==&quot;LARAOS&quot; &amp; prov ==&quot;HUAROCHIRI&quot;,&quot;SAN PEDRO DE LARAOS&quot;,distr),
          prov = replace(prov, distr==&quot;SAN FRANCISCO DE ASIS&quot;,&quot;LAURICOCHA&quot;),
          prov = replace(prov, distr==&quot;RONDOS&quot;,&quot;LAURICOCHA&quot;),
-         dep = replace(dep, distr==&quot;POROTO&quot;,&quot;LA LIBERTAD&quot;),
-         prov = replace(prov, distr==&quot;PAMPAMARCA&quot; &amp; dep ==&quot;HUANUCO&quot;,&quot;YAROWILCA&quot;))%&gt;%
-  filter(!(distr==&quot;HUALLANCA&quot; &amp; prov==&quot;DOS DE MAYO&quot;)
+         reg = replace(reg, distr==&quot;POROTO&quot;,&quot;LA LIBERTAD&quot;),
+         prov = replace(prov, distr==&quot;PAMPAMARCA&quot; &amp; reg ==&quot;HUANUCO&quot;,&quot;YAROWILCA&quot;))%&gt;%
+  dplyr::filter(!(distr==&quot;HUALLANCA&quot; &amp; prov==&quot;DOS DE MAYO&quot;)
   )%&gt;% ## COVID Positivos cleaning
-  mutate(distr = ifelse(distr == &quot;SANTA RITA DE SIHUAS&quot;,&quot;SANTA RITA DE SIGUAS&quot;,
+  dplyr::mutate(distr = ifelse(distr == &quot;SANTA RITA DE SIHUAS&quot;,&quot;SANTA RITA DE SIGUAS&quot;,
                         ifelse(distr ==&quot;SAN FCO DE ASIS DE YARUSYACAN&quot;,&quot;SAN FRANCISCO DE ASIS DE YARUSYACAN&quot;,
                                ifelse(distr ==&quot;RAIMONDI&quot;,&quot;RAYMONDI&quot;,
                                       ifelse(distr ==&quot;CASPIZAPA&quot;,&quot;CASPISAPA&quot;,
@@ -596,12 +636,12 @@ sinadef &lt;- sinadef[-3:-1,-1]</code></pre>
                                                                          ifelse(distr==&quot;CORONEL GREGORIO ALBARRACIN LA&quot;,&quot;CORONEL GREGORIO ALBARRACIN LANCHIPA&quot;,
                                                                                 ifelse(distr==&quot;ETEM&quot;,&quot;ETEN&quot;,distr))))))))))
   ) %&gt;%
-  mutate(distr=ifelse(distr==&quot;ANDRES AVELINO CACERES D.&quot;,&quot;ANDRES AVELINO CACERES DORREGARAY&quot;,
+  dplyr::mutate(distr=ifelse(distr==&quot;ANDRES AVELINO CACERES D.&quot;,&quot;ANDRES AVELINO CACERES DORREGARAY&quot;,
                       ifelse(distr==&quot;SAN PEDRO DE PUTINA PUNCU&quot;,&quot;SAN PEDRO DE PUTINA PUNCO&quot;,
                              ifelse(distr==&quot;CORONEL GREGORIO ALBARRACIN L.&quot;, &quot;CORONEL GREGORIO ALBARRACIN LANCHIPA&quot;,distr))),
-         dep = replace(dep, dep==&quot;LIMA REGION&quot;,&quot;LIMA&quot;)
+         reg = replace(reg, reg==&quot;LIMA REGION&quot;,&quot;LIMA&quot;)
          )%&gt;% ## Covid fallecidos
-  mutate(distr = ifelse(distr == &quot;SANTA RITA DE SIHUAS&quot;,&quot;SANTA RITA DE SIGUAS&quot;,
+  dplyr::mutate(distr = ifelse(distr == &quot;SANTA RITA DE SIHUAS&quot;,&quot;SANTA RITA DE SIGUAS&quot;,
                         ifelse(distr ==&quot;SAN FCO DE ASIS DE YARUSYACAN&quot;,&quot;SAN FRANCISCO DE ASIS DE YARUSYACAN&quot;,
                                ifelse(distr ==&quot;RAIMONDI&quot;,&quot;RAYMONDI&quot;,
                                       ifelse(distr ==&quot;CASPIZAPA&quot;,&quot;CASPISAPA&quot;,
@@ -628,29 +668,29 @@ sinadef &lt;- sinadef[-3:-1,-1]</code></pre>
                                                                          ifelse(distr==&quot;CORONEL GREGORIO ALBARRACIN LA&quot;,&quot;CORONEL GREGORIO ALBARRACIN LANCHIPA&quot;,
                                                                                 ifelse(distr==&quot;ETEM&quot;,&quot;ETEN&quot;,distr))))))))))
   ) %&gt;%
-  mutate(dep = ifelse((distr==&quot;CARABAYLLO&quot; | distr==&quot;LIMA&quot;| distr==&quot;PUENTE PIEDRA&quot; | distr==&quot;SAN MARTIN DE PORRES&quot;| distr==&quot;SAN MIGUEL&quot;) &amp; dep==&quot;CALLAO&quot;,&quot;LIMA&quot;, # Al 03/06/2020
+  dplyr::mutate(reg = ifelse((distr==&quot;CARABAYLLO&quot; | distr==&quot;LIMA&quot;| distr==&quot;PUENTE PIEDRA&quot; | distr==&quot;SAN MARTIN DE PORRES&quot;| distr==&quot;SAN MIGUEL&quot;) &amp; reg==&quot;CALLAO&quot;,&quot;LIMA&quot;, # Al 03/06/2020
                       ifelse(distr==&quot;SANTA EULALIA&quot;,&quot;LIMA&quot;,
                              ifelse(distr==&quot;CALLAO&quot;,&quot;CALLAO&quot;,
                                     ifelse(distr==&quot;PUCARA&quot; &amp; prov==&quot;JAEN&quot;,&quot;CAJAMARCA&quot;,
                                            ifelse(distr==&quot;SAN JUAN DE LURIGANCHO&quot;,&quot;LIMA&quot;,
                                                   ifelse(distr==&quot;CASTILLA&quot; &amp; prov==&quot;PIURA&quot;,&quot;PIURA&quot;,
                                                          ifelse(prov==&quot;CALLAO&quot;,&quot;CALLAO&quot;,
-                                                                ifelse(prov==&quot;TRUJILLO&quot;| distr== &quot;TRUJILLO&quot;,&quot;LA LIBERTAD&quot;,dep)))))))),
+                                                                ifelse(prov==&quot;TRUJILLO&quot;| distr== &quot;TRUJILLO&quot;,&quot;LA LIBERTAD&quot;,reg)))))))),
          prov = ifelse(distr==&quot;OXAPAMPA&quot;,&quot;OXAPAMPA&quot;,prov)) %&gt;%
-  mutate(dep = ifelse(distr==&quot;MORROPON&quot;,&quot;PIURA&quot;,
+  dplyr::mutate(reg = ifelse(distr==&quot;MORROPON&quot;,&quot;PIURA&quot;,
                       ifelse(distr==&quot;ACOBAMBA&quot; &amp; prov==&quot;ACOBAMBA&quot;,&quot;HUANCAVELICA&quot;,
-                             ifelse( (distr==&quot;FLORENCIA DE MORA&quot; | distr== &quot;HUANCHACO&quot; | distr== &quot;EL PORVENIR&quot; | distr== &quot;HUANCHACO&quot;| distr== &quot;LA ESPERANZA&quot;| distr==&quot;LAREDO&quot; | distr==&quot;MOCHE&quot; | distr==&quot;SALAVERRY&quot;| distr==&quot;TRUJILLO&quot; | distr==&quot;VICTOR LARCO HERRERA&quot;) &amp; prov==&quot;TRUJILLO&quot;,&quot;LA LIBERTAD&quot;,dep )))) %&gt;%
-  mutate(prov = replace(prov, distr==&quot;CARHUAZ&quot;, &quot;CARHUAZ&quot;),
+                             ifelse( (distr==&quot;FLORENCIA DE MORA&quot; | distr== &quot;HUANCHACO&quot; | distr== &quot;EL PORVENIR&quot; | distr== &quot;HUANCHACO&quot;| distr== &quot;LA ESPERANZA&quot;| distr==&quot;LAREDO&quot; | distr==&quot;MOCHE&quot; | distr==&quot;SALAVERRY&quot;| distr==&quot;TRUJILLO&quot; | distr==&quot;VICTOR LARCO HERRERA&quot;) &amp; prov==&quot;TRUJILLO&quot;,&quot;LA LIBERTAD&quot;,reg )))) %&gt;%
+  dplyr::mutate(prov = replace(prov, distr==&quot;CARHUAZ&quot;, &quot;CARHUAZ&quot;),
          prov = replace(prov, distr==&quot;CASMA&quot;, &quot;CASMA&quot;),
          prov = replace(prov, distr==&quot;CHIMBOTE&quot;|distr==&quot;COISHCO&quot;, &quot;SANTA&quot;),
-         prov = replace(prov, dep==&quot;CALLAO&quot;,&quot;CALLAO&quot;)) %&gt;%
-  mutate( dep = replace(dep, dep==&quot;ANCASH&quot; &amp; distr ==&quot;GUADALUPITO&quot;,&quot;LA LIBERTAD&quot;),
+         prov = replace(prov, reg==&quot;CALLAO&quot;,&quot;CALLAO&quot;)) %&gt;%
+  dplyr::mutate( reg = replace(reg, reg==&quot;ANCASH&quot; &amp; distr ==&quot;GUADALUPITO&quot;,&quot;LA LIBERTAD&quot;),
           prov = replace(prov, prov==&quot;SIN REGISTRO&quot; &amp; distr==&quot;GUADALUPITO&quot;,&quot;VIRU&quot;),
           prov = replace(prov, prov==&quot;SIN REGISTRO&quot; &amp; distr==&quot;HUARAL&quot;,&quot;HUARAL&quot;),
-          dep = replace(dep, prov==&quot;HUARAL&quot; &amp; distr==&quot;HUARAL&quot;,&quot;LIMA&quot;),
-          dep = replace(dep, distr==&quot;COMAS&quot;,&quot;LIMA&quot;),
+          reg = replace(reg, prov==&quot;HUARAL&quot; &amp; distr==&quot;HUARAL&quot;,&quot;LIMA&quot;),
+          reg = replace(reg, distr==&quot;COMAS&quot;,&quot;LIMA&quot;),
           prov = replace(prov, distr==&quot;COMAS&quot;,&quot;LIMA&quot;),
-          dep = replace(dep, distr==&quot;SIMBAL&quot; &amp; prov==&quot;TRUJILLO&quot;,&quot;LA LIBERTAD&quot;),
+          reg = replace(reg, distr==&quot;SIMBAL&quot; &amp; prov==&quot;TRUJILLO&quot;,&quot;LA LIBERTAD&quot;),
           distr = replace(distr, distr==&quot;CELEND N&quot;,&quot;CELENDIN&quot;),
           distr = replace(distr, distr==&quot;HUANCAN+&quot;,&quot;HUANCANE&quot;),
           distr = replace(distr, distr==&quot;SALITRAL (LUCIANO CASTILLO)&quot;,&quot;SALITRAL&quot;),
@@ -662,54 +702,49 @@ sinadef &lt;- sinadef[-3:-1,-1]</code></pre>
           distr = replace(distr, distr==&quot;CARMEN ALTO 1/&quot;,&quot;CARMEN ALTO&quot;),
           distr = replace(distr, distr==&quot;ANDRES AVELINO CACERES DORREGA&quot;,&quot;ANDRES AVELINO CACERES DORREGARAY&quot;)
   ) %&gt;%
-  filter( !(distr==&quot;PUEBLO NUEVO&quot; &amp; prov==&quot;CALLAO&quot;))%&gt;%
-  filter( !(distr==&quot;LA UNION&quot; &amp; dep==&quot;ANCASH&quot;))%&gt;%
-  filter( !(distr==&quot;HUACHOCOLPA&quot; &amp; prov==&quot;HUANCAYO&quot;))</code></pre>
-<pre class="r"><code>distr.list &lt;- read_csv(&quot;./master_distr.csv&quot;) %&gt;% select(!c(X1))
-
-setdiff(sinadef%&gt;%select(dep,prov,distr),distr.list) %&gt;% filter(!is.na(distr))</code></pre>
-<pre><code>## # A tibble: 0 x 3
-## # ... with 3 variables: dep &lt;chr&gt;, prov &lt;chr&gt;, distr &lt;chr&gt;</code></pre>
+  dplyr::filter( !(distr==&quot;PUEBLO NUEVO&quot; &amp; prov==&quot;CALLAO&quot;))%&gt;%
+  dplyr::filter( !(distr==&quot;LA UNION&quot; &amp; reg==&quot;ANCASH&quot;))%&gt;%
+  dplyr::filter( !(distr==&quot;HUACHOCOLPA&quot; &amp; prov==&quot;HUANCAYO&quot;))</code></pre>
 </div>
 <div id="categorización-de-códigos-cie-10" class="section level2">
 <h2>Categorización de códigos CIE-10</h2>
 <pre class="r"><code>sinadef &lt;- sinadef %&gt;%
-  mutate(causa.A_Letter = ifelse(`CAUSA A (CIE-X)` == &quot;SIN REGISTRO&quot;,
+  mutate(causa.A_Letter = ifelse(CIE10.A== &quot;SIN REGISTRO&quot;,
                             &quot;SIN REGISTRO&quot;,
-                            substr(`CAUSA A (CIE-X)`,0,1)),
-         causa.B_Letter = ifelse(`CAUSA B (CIE-X)` == &quot;SIN REGISTRO&quot;,
+                            substr(CIE10.A,0,1)),
+         causa.B_Letter = ifelse(CIE10.B == &quot;SIN REGISTRO&quot;,
                                  &quot;SIN REGISTRO&quot;,
-                                 substr(`CAUSA B (CIE-X)`,0,1)),
-         causa.C_Letter = ifelse(`CAUSA C (CIE-X)` == &quot;SIN REGISTRO&quot;,
+                                 substr( CIE10.B,0,1)),
+         causa.C_Letter = ifelse(CIE10.C == &quot;SIN REGISTRO&quot;,
                                  &quot;SIN REGISTRO&quot;,
-                                 substr(`CAUSA C (CIE-X)`,0,1)),
-         causa.D_Letter = ifelse(`CAUSA D (CIE-X)` == &quot;SIN REGISTRO&quot;,
+                                 substr(CIE10.C,0,1)),
+         causa.D_Letter = ifelse(CIE10.D == &quot;SIN REGISTRO&quot;,
                                  &quot;SIN REGISTRO&quot;,
-                                 substr(`CAUSA D (CIE-X)`,0,1)),
-         causa.E_Letter = ifelse(`CAUSA E (CIE-X)` == &quot;SIN REGISTRO&quot;,
+                                 substr(CIE10.D,0,1)),
+         causa.E_Letter = ifelse(CIE10.E == &quot;SIN REGISTRO&quot;,
                                  &quot;SIN REGISTRO&quot;,
-                                 substr(`CAUSA E (CIE-X)`,0,1)),
-         causa.F_Letter = ifelse(`CAUSA F (CIE-X)` == &quot;SIN REGISTRO&quot;,
+                                 substr(CIE10.E,0,1)),
+         causa.F_Letter = ifelse(CIE10.F == &quot;SIN REGISTRO&quot;,
                                  &quot;SIN REGISTRO&quot;,
-                                 substr(`CAUSA F (CIE-X)`,0,1)),
-         causa.A_Numb = ifelse(`CAUSA A (CIE-X)` == &quot;SIN REGISTRO&quot;,
-                                 &quot;SIN REGISTRO&quot;,
-                                 substr(`CAUSA A (CIE-X)`,2,5)),
-         causa.B_Numb = ifelse(`CAUSA B (CIE-X)` == &quot;SIN REGISTRO&quot;,
-                                 &quot;SIN REGISTRO&quot;,
-                                 substr(`CAUSA B (CIE-X)`,2,5)),
-         causa.C_Numb = ifelse(`CAUSA C (CIE-X)` == &quot;SIN REGISTRO&quot;,
-                                 &quot;SIN REGISTRO&quot;,
-                                 substr(`CAUSA C (CIE-X)`,2,5)),
-         causa.D_Numb = ifelse(`CAUSA D (CIE-X)` == &quot;SIN REGISTRO&quot;,
-                                 &quot;SIN REGISTRO&quot;,
-                                 substr(`CAUSA D (CIE-X)`,2,5)),
-         causa.E_Numb = ifelse(`CAUSA E (CIE-X)` == &quot;SIN REGISTRO&quot;,
-                                 &quot;SIN REGISTRO&quot;,
-                                 substr(`CAUSA E (CIE-X)`,2,5)),
-         causa.F_Numb = ifelse(`CAUSA F (CIE-X)` == &quot;SIN REGISTRO&quot;,
-                                 &quot;SIN REGISTRO&quot;,
-                                 substr(`CAUSA F (CIE-X)`,0,1)),
+                                 substr(CIE10.F,0,1)),
+         causa.A_Numb = ifelse(CIE10.A == &quot;SIN REGISTRO&quot;,
+                               &quot;SIN REGISTRO&quot;,
+                               substr(CIE10.A,2,5)),
+         causa.B_Numb = ifelse(CIE10.B == &quot;SIN REGISTRO&quot;,
+                               &quot;SIN REGISTRO&quot;,
+                               substr(CIE10.B,2,5)),
+         causa.C_Numb = ifelse(CIE10.C == &quot;SIN REGISTRO&quot;,
+                               &quot;SIN REGISTRO&quot;,
+                               substr(CIE10.C,2,5)),
+         causa.D_Numb = ifelse(CIE10.D == &quot;SIN REGISTRO&quot;,
+                               &quot;SIN REGISTRO&quot;,
+                               substr(CIE10.D,2,5)),
+         causa.E_Numb = ifelse(CIE10.E == &quot;SIN REGISTRO&quot;,
+                               &quot;SIN REGISTRO&quot;,
+                               substr(CIE10.E,2,5)),
+         causa.F_Numb = ifelse(CIE10.F == &quot;SIN REGISTRO&quot;,
+                               &quot;SIN REGISTRO&quot;,
+                               substr(CIE10.F,0,1)),
          tipo.seg = replace(tipo.seg, tipo.seg==&quot;SANIDAD EP&quot;,&quot;SANIDAD&quot;),
          tipo.seg = replace(tipo.seg, tipo.seg==&quot;SANIDAD FAP&quot;,&quot;SANIDAD&quot;),
          tipo.seg = replace(tipo.seg, tipo.seg==&quot;SANIDAD NAVAL&quot;,&quot;SANIDAD&quot;),
@@ -756,8 +791,73 @@ setdiff(sinadef%&gt;%select(dep,prov,distr),distr.list) %&gt;% filter(!is.na(dis
                                                  
                                                  
                                                  )</code></pre>
-<pre class="r"><code>write.csv(sinadef, file.path(paste0(&quot;../sinadef_&quot;,format(Sys.time(),&quot;%Y%m%d&quot;),&quot;.csv&quot;)),row.names = F)</code></pre>
 </div>
+<div id="exclusión-de-datos-incompletos" class="section level2">
+<h2>Exclusión de datos incompletos</h2>
+<p>Se excluyen los datos de:</p>
+<ul>
+<li>Observaciones con una edad irregular (revisar comentarios) o sin registro de su edad (no se tiene claro si su edad esta en dias, meses, años, etc.)
+<ul>
+<li>Excluidos: 494</li>
+</ul></li>
+<li>Observaciones con sexo indeterminado o sin registro
+<ul>
+<li>Excluidos: 58</li>
+</ul></li>
+<li>Observaciones sin nivel de instrucción (sin registro)
+<ul>
+<li>Excluidos: 1</li>
+</ul></li>
+<li>Observaciones sin información a nivel de departamento, provincia o distrito y se mantienene aquellos con país de domicilio en PERÚ.
+<ul>
+<li>Excluidos: 5080</li>
+</ul></li>
+</ul>
+<pre class="r"><code>if (output.excl == T) {
+sinadef.nonproc&lt;- sinadef
+}
+sinadef &lt;- sinadef %&gt;%
+  dplyr::filter(!is.na(edad) &amp; edad&lt;=123 &amp; 
+           sexo!=&quot;INDETERMINADO&quot; &amp; sexo != &quot;SIN REGISTRO&quot;&amp; 
+           niv.ins != &quot;SIN REGISTRO&quot;&amp; 
+           pais == &quot;PERU&quot; &amp; reg!= &quot;SIN REGISTRO&quot; &amp; 
+           prov!= &quot;SIN REGISTRO&quot;&amp; distr!= &quot;SIN REGISTRO&quot; &amp;
+           prov != &quot;ARICA&quot;)
+
+  # La persona más longeva de Perú esta registrada en los medios (123 años) a pesar de ser algo &quot;debatible&quot;.
+  # https://es.wikipedia.org/wiki/Andrea_Guti%C3%A9rrez_Cahuana
+  # Sin embargo, la base presenta a una persona de 148 años. Esta es filtrada</code></pre>
+</div>
+</div>
+<div id="revisión-de-validez" class="section level1">
+<h1>Revisión de validez</h1>
+<p>La siguiente tabla debe resultar en 0 observaciones:</p>
+<pre class="r"><code>distr.list &lt;- import_db(&quot;Perú names&quot;)
+
+dplyr::setdiff(sinadef %&gt;% 
+                 dplyr::select(reg,prov,distr) %&gt;%
+                 group_by(reg,prov,distr) %&gt;% 
+                 summarise(n=n()) %&gt;% 
+                 ungroup() %&gt;% 
+                 dplyr::select(reg,prov,distr) 
+                        ,distr.list)</code></pre>
+<pre><code>## # A tibble: 0 x 3
+## # ... with 3 variables: reg &lt;chr&gt;, prov &lt;chr&gt;, distr &lt;chr&gt;</code></pre>
+</div>
+<div id="exportación" class="section level1">
+<h1>Exportación</h1>
+<p>Los archivos son guardados en la carpeta “outputs”, dentro del directorio principal “db_SINADEF”</p>
+<pre class="r"><code>if (output.csv == T) {
+  write.csv(sinadef, file.path(paste0(&quot;../../output/sinadef_&quot;,max(sinadef$fecha),&quot;.csv&quot;)),row.names = F)
+}
+saveRDS(sinadef,file.path(paste0(&quot;../../output/sinadef_&quot;,max(sinadef$fecha),&quot;.Rdata&quot;)))
+
+if (output.excl == T) {
+if (output.csv == T) {
+  write.csv(sinadef.nonproc, file.path(paste0(&quot;../../output/sinadef_noexcl_&quot;,max(sinadef$fecha),&quot;.csv&quot;)),row.names = F)
+}
+saveRDS(sinadef.nonproc,file.path(paste0(&quot;../../output/sinadef_noexcl_&quot;,max(sinadef$fecha),&quot;.Rdata&quot;)))
+}</code></pre>
 </div>
 
 

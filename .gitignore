@@ -4,3 +4,4 @@ sinadef_*.Rdata
 desktop.ini
 output/
 .Rhistory
+.Rproj.user
